@@ -1,6 +1,7 @@
 import os
 import tempfile
 import asyncio
+import re
 from io import BytesIO
 
 import streamlit as st
@@ -151,11 +152,17 @@ st.markdown(
 )
 
 
-def _tts_to_wav_bytes(text: str, rate: int, volume: float) -> bytes:
+def _tts_to_wav_bytes(text: str, rate: int, volume: float, voice_id: str = None) -> bytes:
     """Generate WAV bytes using local pyttsx3 engine."""
     engine = pyttsx3.init()
     engine.setProperty("rate", rate)
     engine.setProperty("volume", volume)
+    if voice_id:
+        # Some installed voices may not match the requested language; fail gracefully.
+        try:
+            engine.setProperty("voice", voice_id)
+        except Exception:
+            pass
 
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp:
         temp_path = temp.name
@@ -168,6 +175,34 @@ def _tts_to_wav_bytes(text: str, rate: int, volume: float) -> bytes:
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+def _looks_like_hindi(text: str) -> bool:
+    """Best-effort Hindi detection (checks for Devanagari characters)."""
+    if not text:
+        return False
+    for ch in text:
+        if "\u0900" <= ch <= "\u097F":  # Devanagari block
+            return True
+    return False
+
+
+def _get_offline_voice_options():
+    """Return offline pyttsx3 voices as a list of (display_name, voice_id)."""
+    engine = pyttsx3.init()
+    voices = engine.getProperty("voices") or []
+
+    options = []
+    for v in voices:
+        name = str(getattr(v, "name", "") or "")
+        display = name.split("\\")[-1] if "\\" in name else name
+        options.append((display, str(getattr(v, "id", "") or "")))
+    return options
+
+
+def _voice_looks_hindi(display_name: str, voice_id: str) -> bool:
+    haystack = f"{display_name} {voice_id}".lower()
+    return any(k in haystack for k in ["hindi", "hi-in", "hi_", "hi-"])
 
 
 async def _edge_tts_save(text: str, voice: str, rate: str, volume: str, out_path: str):
@@ -188,6 +223,75 @@ def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+def _chunk_text_for_edge_tts(text: str, max_chars: int = 450):
+    """
+    Edge TTS can fail with "No audio was received" on long inputs.
+    Chunk into smaller parts to improve reliability.
+    """
+    text = (text or "").strip()
+    if not text:
+        return []
+
+    # Split on common sentence boundaries (including Hindi "।" danda) and new lines.
+    parts = re.split(r"(?<=[\.\!\?\u0964\u0965])\s+|\n+", text)
+    if not parts:
+        parts = [text]
+
+    chunks = []
+    current = ""
+
+    for part in parts:
+        if not part:
+            continue
+        part = part.strip()
+        if not part:
+            continue
+
+        if len(current) + len(part) <= max_chars:
+            current = f"{current} {part}".strip() if current else part
+            continue
+
+        if current:
+            chunks.append(current.strip())
+            current = ""
+
+        if len(part) <= max_chars:
+            current = part
+        else:
+            # Hard split very long segments.
+            for i in range(0, len(part), max_chars):
+                chunks.append(part[i : i + max_chars].strip())
+
+    if current:
+        chunks.append(current.strip())
+
+    # Remove empties.
+    return [c for c in chunks if c]
+
+
+def _edge_tts_to_mp3_bytes_chunked(
+    text: str,
+    voice: str,
+    rate_pct: int,
+    volume_pct: int,
+    max_chars: int = 450,
+) -> bytes:
+    """Generate MP3 bytes by chunking the input text and concatenating MP3 frames."""
+    chunks = _chunk_text_for_edge_tts(text, max_chars=max_chars)
+    if not chunks:
+        return _edge_tts_to_mp3_bytes("", voice=voice, rate_pct=rate_pct, volume_pct=volume_pct)
+
+    combined = b""
+    for chunk in chunks:
+        combined += _edge_tts_to_mp3_bytes(
+            text=chunk,
+            voice=voice,
+            rate_pct=rate_pct,
+            volume_pct=volume_pct,
+        )
+    return combined
 
 
 if "tts_text" not in st.session_state:
@@ -234,6 +338,7 @@ if engine_mode == "Online (Neerja/Neural)":
             )
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
+            auto_hindi = st.checkbox("Auto Hindi detection", value=True)
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
 
     if edge_tts is None:
@@ -244,12 +349,51 @@ if engine_mode == "Online (Neerja/Neural)":
         else:
             with st.spinner("Generating online neural voice..."):
                 try:
-                    mp3_bytes = _edge_tts_to_mp3_bytes(
-                        text=text,
-                        voice=voice,
-                        rate_pct=speed_pct,
-                        volume_pct=vol_pct,
-                    )
+                    voice_used = voice
+                    if auto_hindi and _looks_like_hindi(text) and not str(voice).startswith("hi-IN-"):
+                        # If the user typed Hindi, switch to a Hindi neural voice automatically.
+                        voice_used = "hi-IN-SwaraNeural"
+
+                    voice_candidates = [voice_used]
+                    if _looks_like_hindi(text):
+                        # If one Hindi voice fails, fall back to the other.
+                        for v in ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"]:
+                            if v not in voice_candidates:
+                                voice_candidates.append(v)
+
+                    max_chars = 450
+                    use_chunking = len(text) > max_chars
+                    chunks_count = len(_chunk_text_for_edge_tts(text, max_chars=max_chars)) if use_chunking else 1
+                    if use_chunking:
+                        st.info(f"Long text detected. Splitting into {chunks_count} parts for Edge TTS...")
+
+                    mp3_bytes = None
+                    last_exc = None
+                    for candidate_voice in voice_candidates:
+                        try:
+                            if use_chunking:
+                                mp3_bytes = _edge_tts_to_mp3_bytes_chunked(
+                                    text=text,
+                                    voice=candidate_voice,
+                                    rate_pct=speed_pct,
+                                    volume_pct=vol_pct,
+                                    max_chars=max_chars,
+                                )
+                            else:
+                                mp3_bytes = _edge_tts_to_mp3_bytes(
+                                    text=text,
+                                    voice=candidate_voice,
+                                    rate_pct=speed_pct,
+                                    volume_pct=vol_pct,
+                                )
+                            if mp3_bytes:
+                                voice_used = candidate_voice
+                                break
+                        except Exception as exc:
+                            last_exc = exc
+
+                    if not mp3_bytes:
+                        raise RuntimeError(f"Edge TTS returned no audio. Last error: {last_exc}")
                 except Exception as exc:
                     st.error(f"Could not generate online voice: {exc}")
                 else:
@@ -264,12 +408,35 @@ if engine_mode == "Online (Neerja/Neural)":
 else:
     with st.container(border=True):
         st.markdown('<p class="section-title">Offline Voice Controls</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-note">Works offline using installed Windows voices.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-note">Works offline using installed Windows voices (Hindi works if you have a Hindi voice installed).</p>', unsafe_allow_html=True)
         controls_col1, controls_col2 = st.columns(2)
         with controls_col1:
             speed_label = st.selectbox("Speed", ["Slow", "Normal", "Fast"], index=1)
         with controls_col2:
             volume_pct = st.slider("Volume", min_value=0, max_value=100, value=100)
+            offline_voice_id = None
+            if pyttsx3 is not None:
+                voice_options = _get_offline_voice_options()
+                voice_displays = [d if d else vid for d, vid in voice_options]
+                display_to_voice_id = {
+                    (display if display else voice_id): voice_id for display, voice_id in voice_options
+                }
+
+                default_index = 0
+                if _looks_like_hindi(text) and voice_options:
+                    for i, (display, vid) in enumerate(voice_options):
+                        if _voice_looks_hindi(display, vid):
+                            default_index = i
+                            break
+
+                if voice_displays:
+                    offline_voice_display = st.selectbox(
+                        "Offline Voice",
+                        voice_displays,
+                        index=default_index,
+                    )
+                    # Map the selected display string back to its voice_id.
+                    offline_voice_id = display_to_voice_id.get(offline_voice_display)
 
     speed_map = {"Slow": 120, "Normal": 175, "Fast": 240}
     rate = speed_map[speed_label]
@@ -283,7 +450,12 @@ else:
         else:
             with st.spinner("Generating offline voice..."):
                 try:
-                    wav_bytes = _tts_to_wav_bytes(text, rate=rate, volume=volume)
+                    wav_bytes = _tts_to_wav_bytes(
+                        text,
+                        rate=rate,
+                        volume=volume,
+                        voice_id=offline_voice_id,
+                    )
                 except Exception as exc:
                     st.error(f"Could not generate speech: {exc}")
                 else:
