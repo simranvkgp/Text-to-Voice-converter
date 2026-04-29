@@ -210,10 +210,16 @@ async def _edge_tts_save(text: str, voice: str, rate: str, volume: str, out_path
     await communicate.save(out_path)
 
 
+def _edge_rate_volume_strings(rate_pct: int, volume_pct: int) -> tuple[str, str]:
+    """edge-tts expects strings like '+10%' or '0%'. Avoid '+0%'."""
+    rate = "0%" if rate_pct == 0 else f"{rate_pct:+d}%"
+    volume = "0%" if volume_pct == 0 else f"{volume_pct:+d}%"
+    return rate, volume
+
+
 def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int) -> bytes:
     """Generate MP3 bytes using online Edge TTS neural voices."""
-    rate = f"{rate_pct:+d}%"
-    volume = f"{volume_pct:+d}%"
+    rate, volume = _edge_rate_volume_strings(rate_pct, volume_pct)
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp:
         temp_path = temp.name
     try:
@@ -361,7 +367,8 @@ if engine_mode == "Online (Neerja/Neural)":
                             if v not in voice_candidates:
                                 voice_candidates.append(v)
 
-                    max_chars = 450
+                    # Smaller chunks improve reliability for longer Hindi paragraphs.
+                    max_chars = 300
                     use_chunking = len(text) > max_chars
                     chunks_count = len(_chunk_text_for_edge_tts(text, max_chars=max_chars)) if use_chunking else 1
                     if use_chunking:
@@ -391,6 +398,30 @@ if engine_mode == "Online (Neerja/Neural)":
                                 break
                         except Exception as exc:
                             last_exc = exc
+                            # Edge TTS sometimes fails specifically on parameter combinations.
+                            # If so, retry once with neutral rate/volume.
+                            if "No audio was received" in str(exc) and (speed_pct != 0 or vol_pct != 0):
+                                try:
+                                    if use_chunking:
+                                        mp3_bytes = _edge_tts_to_mp3_bytes_chunked(
+                                            text=text,
+                                            voice=candidate_voice,
+                                            rate_pct=0,
+                                            volume_pct=0,
+                                            max_chars=max_chars,
+                                        )
+                                    else:
+                                        mp3_bytes = _edge_tts_to_mp3_bytes(
+                                            text=text,
+                                            voice=candidate_voice,
+                                            rate_pct=0,
+                                            volume_pct=0,
+                                        )
+                                    if mp3_bytes:
+                                        voice_used = candidate_voice
+                                        break
+                                except Exception:
+                                    pass
 
                     if not mp3_bytes:
                         raise RuntimeError(f"Edge TTS returned no audio. Last error: {last_exc}")
