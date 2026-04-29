@@ -121,6 +121,21 @@ st.markdown(
         font-weight: 400;
         max-width: 920px;
     }
+    .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    .hero-chip {
+        border: 1px solid rgba(226,232,240,0.28);
+        background: rgba(15,23,42,0.48);
+        color: #e2e8f0;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: .75rem;
+        letter-spacing: .02em;
+    }
 
     .feature-strip {
         margin: 10px 0 16px 0;
@@ -133,12 +148,17 @@ st.markdown(
         backdrop-filter: blur(6px);
     }
     .feature-item {
-        padding: 9px 10px;
+        padding: 10px 10px;
         text-align: center;
         border-right: 1px solid rgba(148,163,184,0.18);
         font-size: .76rem;
         color: #94a3b8;
         letter-spacing: .03em;
+        transition: background .2s ease, color .2s ease;
+    }
+    .feature-item:hover {
+        background: rgba(99,102,241,0.15);
+        color: #dbeafe;
     }
     .feature-item:last-child { border-right: none; }
     .feature-item strong {
@@ -155,6 +175,7 @@ st.markdown(
         border: 1px solid rgba(148,163,184,0.24) !important;
         border-radius: 14px !important;
         box-shadow: 0 8px 22px rgba(2,6,23,0.30);
+        backdrop-filter: blur(8px);
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         padding-top: .55rem;
@@ -259,6 +280,11 @@ st.markdown(
           <p class="hero-eyebrow">Text-to-Speech Studio</p>
           <h1>TextVoice <em>Converter</em></h1>
           <p>Transform written text into natural-sounding speech — with Indian neural voices online, or system voices offline.</p>
+          <div class="hero-meta">
+            <span class="hero-chip">Hindi + English</span>
+            <span class="hero-chip">Online + Offline</span>
+            <span class="hero-chip">MP3 / WAV Export</span>
+          </div>
         </div>
       </div>
     </div>
