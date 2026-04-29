@@ -1,0 +1,4 @@
+streamlit
+edge-tts
+# Optional, for offline mode:
+pyttsx3
