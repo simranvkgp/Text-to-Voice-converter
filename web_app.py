@@ -451,8 +451,11 @@ if engine_mode == "Online (Neerja/Neural)":
                     try:
                         fallback_lang = "hi" if _looks_like_hindi(text) else "en"
                         mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
-                    except Exception:
-                        st.error(f"Could not generate online voice: {exc}")
+                    except Exception as gtts_exc:
+                        st.error(
+                            "Could not generate online voice. "
+                            f"Edge TTS error: {exc} | gTTS fallback error: {gtts_exc}"
+                        )
                     else:
                         st.warning("Edge TTS failed, used gTTS fallback.")
                         st.audio(BytesIO(mp3_bytes), format="audio/mp3")
