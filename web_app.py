@@ -32,50 +32,38 @@ st.markdown(
 
     /* ── Base ── */
     .stApp {
-        background-color: #0d0a06;
-        background-image:
-            radial-gradient(ellipse 70% 40% at 15% 0%, rgba(214,158,46,0.13) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 30% at 85% 5%,  rgba(214,158,46,0.07) 0%, transparent 55%),
-            repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 39px,
-                rgba(255,255,255,0.018) 39px,
-                rgba(255,255,255,0.018) 40px
-            );
-        color: #e8dcc8;
+        background:
+            radial-gradient(800px 420px at 8% -10%, rgba(99, 102, 241, 0.22), transparent 60%),
+            radial-gradient(700px 360px at 92% 0%, rgba(16, 185, 129, 0.20), transparent 55%),
+            linear-gradient(165deg, #070b1d 0%, #0d1430 45%, #0a1127 100%);
+        color: #e2e8f0;
         font-family: 'DM Sans', sans-serif;
     }
 
     .block-container {
         max-width: 1260px;
-        padding-top: 0.6rem;
-        padding-bottom: 2rem;
-        padding-left: 1.4rem;
-        padding-right: 1.4rem;
+        padding-top: 0.8rem;
+        padding-bottom: 1.8rem;
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
     }
 
     /* ── Hero ── */
     .hero {
         position: relative;
         overflow: hidden;
-        background: linear-gradient(118deg, #1a1208 0%, #201508 60%, #160f04 100%);
-        border: 1px solid rgba(214,158,46,0.30);
-        border-radius: 4px;
-        padding: 28px 32px 24px 32px;
-        margin-bottom: 2px;
+        background: linear-gradient(120deg, rgba(79,70,229,0.42), rgba(15,23,42,0.72) 45%, rgba(5,150,105,0.35));
+        border: 1px solid rgba(148, 163, 184, 0.30);
+        border-radius: 18px;
+        padding: 24px 26px 20px 26px;
+        margin-bottom: 4px;
+        box-shadow: 0 14px 34px rgba(2, 6, 23, 0.40);
     }
     .hero::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 3px,
-            rgba(214,158,46,0.025) 3px,
-            rgba(214,158,46,0.025) 4px
-        );
+        background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15), transparent 40%);
         pointer-events: none;
     }
     .hero-inner {
@@ -95,7 +83,7 @@ st.markdown(
         display: inline-block;
         width: 4px;
         border-radius: 2px;
-        background: linear-gradient(180deg, #d69e2e, #b7791f);
+        background: linear-gradient(180deg, #a5b4fc, #818cf8);
         animation: wave 1.4s ease-in-out infinite;
     }
     .hero-waveform span:nth-child(1)  { height: 14px; animation-delay: 0.0s; }
@@ -119,7 +107,7 @@ st.markdown(
         font-weight: 500;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #d69e2e;
+        color: #c7d2fe;
         margin: 0 0 6px 0;
     }
     .hero h1 {
@@ -128,19 +116,19 @@ st.markdown(
         font-weight: 400;
         line-height: 1.1;
         margin: 0 0 8px 0;
-        color: #f5e8c8;
+        color: #f8fafc;
         letter-spacing: -0.01em;
     }
     .hero h1 em {
         font-style: italic;
-        color: #d69e2e;
+        color: #86efac;
     }
     .hero p {
         font-size: 0.9rem;
-        color: #a89070;
+        color: #cbd5e1;
         margin: 0;
         line-height: 1.55;
-        font-weight: 300;
+        font-weight: 400;
     }
 
     /* ── Feature strip ── */
@@ -148,27 +136,27 @@ st.markdown(
         display: flex;
         gap: 0;
         margin-bottom: 16px;
-        border: 1px solid rgba(214,158,46,0.20);
+        border: 1px solid rgba(148, 163, 184, 0.24);
         border-top: none;
-        border-radius: 0 0 4px 4px;
+        border-radius: 0 0 16px 16px;
         overflow: hidden;
     }
     .feature-item {
         flex: 1;
         padding: 9px 14px;
-        background: rgba(20,14,4,0.85);
+        background: rgba(15, 23, 42, 0.72);
         font-size: 0.76rem;
-        color: #8a7055;
+        color: #94a3b8;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         font-weight: 500;
         text-align: center;
-        border-right: 1px solid rgba(214,158,46,0.14);
+        border-right: 1px solid rgba(148, 163, 184, 0.20);
         transition: background 0.2s, color 0.2s;
     }
     .feature-item:last-child { border-right: none; }
     .feature-item strong {
-        color: #c8a060;
+        color: #e2e8f0;
         font-weight: 600;
         display: block;
         font-size: 0.9rem;
@@ -179,9 +167,10 @@ st.markdown(
 
     /* ── Section cards (Streamlit border containers) ── */
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(16, 10, 2, 0.70) !important;
-        border: 1px solid rgba(214,158,46,0.22) !important;
-        border-radius: 4px !important;
+        background: rgba(15, 23, 42, 0.58) !important;
+        border: 1px solid rgba(148, 163, 184, 0.24) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 8px 22px rgba(2, 6, 23, 0.28);
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         padding-top: 0.6rem;
@@ -191,36 +180,36 @@ st.markdown(
     /* ── Labels ── */
     .section-title {
         font-family: 'DM Serif Display', serif;
-        font-size: 1.05rem;
+        font-size: 1.08rem;
         font-weight: 400;
-        color: #f0ddb0;
+        color: #f8fafc;
         margin: 0 0 1px 0;
         letter-spacing: 0.01em;
     }
     .section-note {
         font-size: 0.82rem;
-        color: #7a6045;
+        color: #94a3b8;
         margin: 0 0 10px 0;
-        font-weight: 300;
+        font-weight: 400;
         line-height: 1.45;
     }
 
     /* ── Streamlit widget overrides ── */
     div[data-testid="stTextArea"] textarea {
-        background: #0a0700 !important;
-        color: #e8dcc8 !important;
-        border: 1px solid rgba(214,158,46,0.28) !important;
-        border-radius: 4px !important;
+        background: #0b1228 !important;
+        color: #f8fafc !important;
+        border: 1px solid rgba(148, 163, 184, 0.30) !important;
+        border-radius: 12px !important;
         font-family: 'DM Sans', sans-serif !important;
         font-size: 0.92rem !important;
         line-height: 1.6 !important;
     }
     div[data-testid="stTextArea"] textarea:focus {
-        border: 1px solid rgba(214,158,46,0.65) !important;
-        box-shadow: 0 0 0 2px rgba(214,158,46,0.12) !important;
+        border: 1px solid rgba(129, 140, 248, 0.90) !important;
+        box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.18) !important;
     }
     div[data-testid="stTextArea"] textarea::placeholder {
-        color: #4a3820 !important;
+        color: #64748b !important;
     }
 
     /* Selectbox, radio, slider text */
@@ -229,81 +218,81 @@ st.markdown(
     div[data-testid="stSlider"] > div,
     .stRadio label,
     label {
-        color: #c8a878 !important;
+        color: #cbd5e1 !important;
         font-family: 'DM Sans', sans-serif !important;
     }
 
     /* Slider track */
     div[data-testid="stSlider"] [data-baseweb="slider"] [role="progressbar"] {
-        background-color: #d69e2e !important;
+        background: linear-gradient(90deg, #818cf8, #34d399) !important;
     }
     div[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
-        background-color: #d69e2e !important;
-        border-color: #d69e2e !important;
+        background-color: #a5b4fc !important;
+        border-color: #a5b4fc !important;
     }
 
     /* Radio selected */
     div[data-testid="stRadio"] [data-baseweb="radio"] [data-checked="true"] div {
-        background-color: #d69e2e !important;
-        border-color: #d69e2e !important;
+        background-color: #818cf8 !important;
+        border-color: #818cf8 !important;
     }
 
     /* ── Primary button ── */
     div[data-testid="stButton"] button,
     div[data-testid="baseButton-primary"] {
-        border-radius: 3px !important;
-        border: 1px solid rgba(214,158,46,0.55) !important;
-        background: linear-gradient(135deg, #c8891a 0%, #a06810 100%) !important;
-        color: #fdf3de !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(129, 140, 248, 0.55) !important;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
         font-family: 'DM Sans', sans-serif !important;
         font-weight: 600 !important;
-        font-size: 0.88rem !important;
-        letter-spacing: 0.06em !important;
-        text-transform: uppercase !important;
-        box-shadow: 0 4px 16px rgba(180,120,20,0.28), inset 0 1px 0 rgba(255,220,120,0.15) !important;
+        font-size: 0.92rem !important;
+        letter-spacing: 0.01em !important;
+        text-transform: none !important;
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35) !important;
         transition: all 0.18s !important;
     }
     div[data-testid="stButton"] button:hover {
-        background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%) !important;
-        box-shadow: 0 6px 24px rgba(214,158,46,0.40) !important;
+        background: linear-gradient(135deg, #7c83ff 0%, #6366f1 100%) !important;
+        box-shadow: 0 10px 24px rgba(99, 102, 241, 0.44) !important;
         transform: translateY(-1px) !important;
     }
 
     /* ── Download button ── */
     div[data-testid="stDownloadButton"] button {
-        border-radius: 3px !important;
-        border: 1px solid rgba(214,158,46,0.35) !important;
-        background: rgba(20,14,4,0.9) !important;
-        color: #d69e2e !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(52, 211, 153, 0.45) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        color: #ffffff !important;
         font-family: 'DM Sans', sans-serif !important;
         font-weight: 600 !important;
-        font-size: 0.85rem !important;
-        letter-spacing: 0.05em !important;
-        text-transform: uppercase !important;
-        box-shadow: inset 0 0 0 1px rgba(214,158,46,0.18) !important;
+        font-size: 0.9rem !important;
+        letter-spacing: 0.01em !important;
+        text-transform: none !important;
+        box-shadow: 0 8px 20px rgba(4, 120, 87, 0.30) !important;
     }
     div[data-testid="stDownloadButton"] button:hover {
-        background: rgba(214,158,46,0.12) !important;
-        border-color: rgba(214,158,46,0.55) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border-color: rgba(52, 211, 153, 0.65) !important;
     }
 
     /* ── Audio player ── */
     audio {
         width: 100%;
-        border-radius: 4px;
-        filter: sepia(0.4) hue-rotate(-10deg);
+        border-radius: 10px;
+        filter: none;
     }
 
     /* ── Alert/warning overrides ── */
     div[data-testid="stAlert"] {
-        border-radius: 4px !important;
-        border-left: 3px solid #d69e2e !important;
-        background: rgba(214,158,46,0.08) !important;
+        border-radius: 10px !important;
+        border-left: 3px solid #818cf8 !important;
+        background: rgba(99, 102, 241, 0.10) !important;
     }
 
     @media (max-width: 900px) {
-        .block-container { padding-left: 0.8rem; padding-right: 0.8rem; }
-        .hero { padding: 20px 18px; }
+        .block-container { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .hero { padding: 18px 16px; border-radius: 14px; }
         .hero h1 { font-size: 1.8rem; }
         .hero-waveform { display: none; }
         .feature-strip { flex-wrap: wrap; }
