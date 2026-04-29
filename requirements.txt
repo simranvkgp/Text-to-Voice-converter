@@ -1,4 +1,5 @@
 streamlit
 edge-tts
+gTTS
 # Optional, for offline mode:
 pyttsx3

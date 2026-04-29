@@ -16,6 +16,11 @@ try:
 except ImportError:
     edge_tts = None
 
+try:
+    from gtts import gTTS
+except ImportError:
+    gTTS = None
+
 
 st.set_page_config(page_title="TextVoice Web", page_icon="🔊", layout="wide")
 st.markdown(
@@ -300,6 +305,22 @@ def _edge_tts_to_mp3_bytes_chunked(
     return combined
 
 
+def _gtts_to_mp3_bytes(text: str, lang: str) -> bytes:
+    """Fallback online TTS using gTTS."""
+    if gTTS is None:
+        raise RuntimeError("gTTS is not installed")
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp:
+        temp_path = temp.name
+    try:
+        tts = gTTS(text=text, lang=lang)
+        tts.save(temp_path)
+        with open(temp_path, "rb") as f:
+            return f.read()
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
 
@@ -426,7 +447,22 @@ if engine_mode == "Online (Neerja/Neural)":
                     if not mp3_bytes:
                         raise RuntimeError(f"Edge TTS returned no audio. Last error: {last_exc}")
                 except Exception as exc:
-                    st.error(f"Could not generate online voice: {exc}")
+                    # Cloud fallback: if edge-tts fails, try gTTS for Hindi/English.
+                    try:
+                        fallback_lang = "hi" if _looks_like_hindi(text) else "en"
+                        mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
+                    except Exception:
+                        st.error(f"Could not generate online voice: {exc}")
+                    else:
+                        st.warning("Edge TTS failed, used gTTS fallback.")
+                        st.audio(BytesIO(mp3_bytes), format="audio/mp3")
+                        st.download_button(
+                            "Download MP3",
+                            data=mp3_bytes,
+                            file_name="textvoice_fallback_output.mp3",
+                            mime="audio/mpeg",
+                            width="stretch",
+                        )
                 else:
                     st.audio(BytesIO(mp3_bytes), format="audio/mp3")
                     st.download_button(
