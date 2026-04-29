@@ -40,7 +40,7 @@ st.markdown(
         box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
         border-radius: 20px;
         padding: 20px 22px;
-        margin-bottom: 10px;
+        margin: 60px 0px 10px 0px;
     }
     .hero h1 {
         margin: 0;
