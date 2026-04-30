@@ -306,7 +306,26 @@ if engine_mode == "Online (Neerja/Neural)":
         st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
         controls_col1, controls_col2 = st.columns(2)
         voice_options_by_language = {
-            "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
+            "English": [
+                "en-IN-NeerjaNeural",
+                "en-IN-PrabhatNeural",
+                "bn-IN-BashkarNeural",
+                "bn-IN-TanishaaNeural",
+                "gu-IN-DhwaniNeural",
+                "gu-IN-NiranjanNeural",
+                "kn-IN-GaganNeural",
+                "kn-IN-SapnaNeural",
+                "ml-IN-MidhunNeural",
+                "ml-IN-SobhanaNeural",
+                "mr-IN-AarohiNeural",
+                "mr-IN-ManoharNeural",
+                "pa-IN-OjasNeural",
+                "pa-IN-VaaniNeural",
+                "ta-IN-PallaviNeural",
+                "ta-IN-ValluvarNeural",
+                "te-IN-MohanNeural",
+                "te-IN-ShrutiNeural",
+            ],
             "Hindi": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
             "Bengali": ["bn-IN-BashkarNeural", "bn-IN-TanishaaNeural"],
             "Gujarati": ["gu-IN-DhwaniNeural", "gu-IN-NiranjanNeural"],
