@@ -1,6 +1,7 @@
 import os
 import tempfile
 import asyncio
+import re
 from io import BytesIO
 
 import streamlit as st
@@ -260,6 +261,17 @@ def _pick_offline_voice(language: str) -> str | None:
     return None
 
 
+def _safe_file_stem(raw_name: str, fallback: str = "textvoice_output") -> str:
+    """Create a filesystem-safe file stem (name without extension)."""
+    stem = (raw_name or "").strip()
+    if not stem:
+        return fallback
+    stem = re.sub(r'[\\/:*?"<>|]+', "_", stem)
+    stem = re.sub(r"\s+", "_", stem)
+    stem = stem.strip("._")
+    return stem or fallback
+
+
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
 
@@ -305,6 +317,7 @@ if engine_mode == "Online (Neerja/Neural)":
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
+            online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
 
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
@@ -327,7 +340,7 @@ if engine_mode == "Online (Neerja/Neural)":
                     st.download_button(
                         "Download MP3",
                         data=mp3_bytes,
-                        file_name="textvoice_neerja_output.mp3",
+                        file_name=f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3",
                         mime="audio/mpeg",
                         width="stretch",
                     )
@@ -341,6 +354,7 @@ else:
             speed_label = st.selectbox("Speed", ["Slow", "Normal", "Fast"], index=1)
         with controls_col2:
             volume_pct = st.slider("Volume", min_value=0, max_value=100, value=100)
+            offline_file_stem = st.text_input("File name", value="textvoice_output")
 
     speed_map = {"Slow": 120, "Normal": 175, "Fast": 240}
     rate = speed_map[speed_label]
@@ -365,7 +379,7 @@ else:
                     st.download_button(
                         "Download WAV",
                         data=wav_bytes,
-                        file_name="textvoice_output.wav",
+                        file_name=f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav",
                         mime="audio/wav",
                         width="stretch",
                     )
