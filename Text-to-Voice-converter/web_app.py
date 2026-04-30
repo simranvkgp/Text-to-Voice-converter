@@ -308,9 +308,17 @@ if engine_mode == "Online (Neerja/Neural)":
         voice_options_by_language = {
             "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
             "Hindi": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
+            "Bengali": ["bn-IN-BashkarNeural", "bn-IN-TanishaaNeural"],
+            "Gujarati": ["gu-IN-DhwaniNeural", "gu-IN-NiranjanNeural"],
+            "Kannada": ["kn-IN-GaganNeural", "kn-IN-SapnaNeural"],
+            "Malayalam": ["ml-IN-MidhunNeural", "ml-IN-SobhanaNeural"],
+            "Marathi": ["mr-IN-AarohiNeural", "mr-IN-ManoharNeural"],
+            "Punjabi": ["pa-IN-OjasNeural", "pa-IN-VaaniNeural"],
+            "Tamil": ["ta-IN-PallaviNeural", "ta-IN-ValluvarNeural"],
+            "Telugu": ["te-IN-MohanNeural", "te-IN-ShrutiNeural"],
         }
         with controls_col1:
-            language = st.selectbox("Language", ["English", "Hindi"], index=0)
+            language = st.selectbox("Language", list(voice_options_by_language.keys()), index=0)
             voice = st.selectbox(
                 "Online Voice",
                 voice_options_by_language[language],
