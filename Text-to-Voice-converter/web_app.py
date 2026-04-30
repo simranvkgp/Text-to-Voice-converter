@@ -123,17 +123,60 @@ st.markdown(
         color: #ffffff !important;
         font-weight: 600 !important;
     }
+    .app-footer {
+        margin-top: 1rem;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.85rem;
+        letter-spacing: 0.01em;
+    }
     @media (max-width: 900px) {
         .block-container {
             padding-left: 0.7rem;
             padding-right: 0.7rem;
+            padding-top: 0.6rem;
         }
         .hero {
             padding: 16px 16px;
             border-radius: 14px;
+            margin-top: 12px;
         }
         .hero h1 {
             font-size: 1.6rem;
+            line-height: 1.25;
+        }
+        .hero p {
+            font-size: 0.92rem;
+        }
+        .glass-card {
+            padding: 9px 10px;
+            border-radius: 12px;
+        }
+        .stat-chip {
+            display: block;
+            width: fit-content;
+            margin: 6px 0 0 0;
+        }
+        div[data-testid="stTextArea"] textarea {
+            min-height: 150px !important;
+            font-size: 16px !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+        div[data-testid="stButton"] button,
+        div[data-testid="stDownloadButton"] button {
+            min-height: 44px !important;
+            font-size: 0.96rem !important;
+        }
+        .app-footer {
+            margin-top: 0.7rem;
+            font-size: 0.8rem;
         }
     }
     </style>
@@ -326,3 +369,5 @@ else:
                         mime="audio/wav",
                         width="stretch",
                     )
+
+st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur</p>', unsafe_allow_html=True)
