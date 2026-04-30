@@ -266,6 +266,8 @@ def _safe_file_stem(raw_name: str, fallback: str = "textvoice_output") -> str:
     stem = (raw_name or "").strip()
     if not stem:
         return fallback
+    # Remove user-provided extension to avoid names like file.mp3.mp3.
+    stem, _ = os.path.splitext(stem)
     stem = re.sub(r'[\\/:*?"<>|]+', "_", stem)
     stem = re.sub(r"\s+", "_", stem)
     stem = stem.strip("._")
