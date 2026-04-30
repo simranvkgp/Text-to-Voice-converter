@@ -151,9 +151,11 @@ st.markdown(
 )
 
 
-def _tts_to_wav_bytes(text: str, rate: int, volume: float) -> bytes:
+def _tts_to_wav_bytes(text: str, rate: int, volume: float, voice_id: str | None = None) -> bytes:
     """Generate WAV bytes using local pyttsx3 engine."""
     engine = pyttsx3.init()
+    if voice_id:
+        engine.setProperty("voice", voice_id)
     engine.setProperty("rate", rate)
     engine.setProperty("volume", volume)
 
@@ -190,6 +192,31 @@ def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int
             os.remove(temp_path)
 
 
+def _pick_offline_voice(language: str) -> str | None:
+    """Pick a matching local voice for the selected language if possible."""
+    if pyttsx3 is None:
+        return None
+    try:
+        engine = pyttsx3.init()
+        voices = engine.getProperty("voices")
+    except Exception:
+        return None
+
+    hindi_tokens = ("hi", "hindi", "hin", "india", "indian")
+    english_tokens = ("en", "english")
+    target_tokens = hindi_tokens if language == "Hindi" else english_tokens
+
+    for voice in voices:
+        haystack_parts = [str(getattr(voice, "name", "")), str(getattr(voice, "id", ""))]
+        languages = getattr(voice, "languages", None)
+        if languages:
+            haystack_parts.extend(str(item) for item in languages)
+        haystack = " ".join(haystack_parts).lower()
+        if any(token in haystack for token in target_tokens):
+            return str(getattr(voice, "id", None) or "")
+    return None
+
+
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
 
@@ -221,15 +248,15 @@ if engine_mode == "Online (Neerja/Neural)":
         st.markdown('<p class="section-title">Online Neural Controls</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
         controls_col1, controls_col2 = st.columns(2)
+        voice_options_by_language = {
+            "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
+            "Hindi": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
+        }
         with controls_col1:
+            language = st.selectbox("Language", ["English", "Hindi"], index=0)
             voice = st.selectbox(
                 "Online Voice",
-                [
-                    "en-IN-NeerjaNeural",
-                    "en-IN-PrabhatNeural",
-                    "hi-IN-SwaraNeural",
-                    "hi-IN-MadhurNeural",
-                ],
+                voice_options_by_language[language],
                 index=0,
             )
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
@@ -267,6 +294,7 @@ else:
         st.markdown('<p class="section-note">Works offline using installed Windows voices.</p>', unsafe_allow_html=True)
         controls_col1, controls_col2 = st.columns(2)
         with controls_col1:
+            language = st.selectbox("Language", ["English", "Hindi"], index=0)
             speed_label = st.selectbox("Speed", ["Slow", "Normal", "Fast"], index=1)
         with controls_col2:
             volume_pct = st.slider("Volume", min_value=0, max_value=100, value=100)
@@ -283,10 +311,13 @@ else:
         else:
             with st.spinner("Generating offline voice..."):
                 try:
-                    wav_bytes = _tts_to_wav_bytes(text, rate=rate, volume=volume)
+                    selected_voice_id = _pick_offline_voice(language)
+                    wav_bytes = _tts_to_wav_bytes(text, rate=rate, volume=volume, voice_id=selected_voice_id)
                 except Exception as exc:
                     st.error(f"Could not generate speech: {exc}")
                 else:
+                    if language == "Hindi" and not selected_voice_id:
+                        st.info("Hindi offline voice not found in installed system voices. Using default voice.")
                     st.audio(BytesIO(wav_bytes), format="audio/wav")
                     st.download_button(
                         "Download WAV",
