@@ -17,7 +17,7 @@ except ImportError:
     edge_tts = None
 
 
-st.set_page_config(page_title="BharatVoice Studio", page_icon="🎙️", layout="wide")
+st.set_page_config(page_title="AwaazCraft", page_icon="🎙️", layout="wide")
 st.markdown(
     """
     <style>
@@ -183,7 +183,7 @@ st.markdown(
     }
     </style>
     <div class="hero">
-      <h1>🎙️ BharatVoice Studio</h1>
+      <h1>🎙️ AwaazCraft</h1>
       <p>Turn text into clear, natural speech with premium Indian neural voices and offline system voices.</p>
     </div>
     <div class="glass-card">
@@ -217,19 +217,20 @@ def _tts_to_wav_bytes(text: str, rate: int, volume: float, voice_id: str | None 
             os.remove(temp_path)
 
 
-async def _edge_tts_save(text: str, voice: str, rate: str, volume: str, out_path: str):
-    communicate = edge_tts.Communicate(text=text, voice=voice, rate=rate, volume=volume)
+async def _edge_tts_save(text: str, voice: str, rate: str, volume: str, out_path: str, pitch: str = "+0Hz"):
+    communicate = edge_tts.Communicate(text=text, voice=voice, rate=rate, volume=volume, pitch=pitch)
     await communicate.save(out_path)
 
 
-def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int) -> bytes:
+def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int, pitch_hz: int = 0) -> bytes:
     """Generate MP3 bytes using online Edge TTS neural voices."""
     rate = f"{rate_pct:+d}%"
     volume = f"{volume_pct:+d}%"
+    pitch = f"{pitch_hz:+d}Hz"
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp:
         temp_path = temp.name
     try:
-        asyncio.run(_edge_tts_save(text, voice, rate, volume, temp_path))
+        asyncio.run(_edge_tts_save(text, voice, rate, volume, temp_path, pitch))
         with open(temp_path, "rb") as f:
             return f.read()
     finally:
@@ -275,8 +276,36 @@ def _safe_file_stem(raw_name: str, fallback: str = "textvoice_output") -> str:
     return stem or fallback
 
 
+def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
+    word_count = len(text.split())
+    if word_count == 0:
+        return 0
+    return max(1, int((word_count / words_per_minute) * 60))
+
+
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
+if "recent_clips" not in st.session_state:
+    st.session_state["recent_clips"] = []
+
+quick_templates = {
+    "Greeting": "Hello and welcome! Thank you for listening to this audio clip.",
+    "YouTube Intro": "Hi everyone, welcome back to my channel. Let's get started.",
+    "Hindi Greeting": "नमस्ते! आपका स्वागत है। यह एक हिंदी वॉइस सैंपल है।",
+    "Motivation": "Believe in yourself, stay consistent, and success will follow.",
+}
+voice_preview_lines = {
+    "English": "Hello, this is AwaazCraft voice preview.\nYour selected voice is clear and natural.",
+    "Hindi": "नमस्ते! यह AwaazCraft का वॉइस प्रीव्यू है।\nयह आवाज़ साफ़ और प्राकृतिक है।",
+    "Bengali": "নমস্কার! এটি AwaazCraft-এর ভয়েস প্রিভিউ।\nএই কণ্ঠস্বরটি স্পষ্ট এবং স্বাভাবিক।",
+    "Gujarati": "નમસ્તે! આ AwaazCraft નો વોઇસ પ્રિવ્યૂ છે.\nઆ અવાજ સ્પષ્ટ અને પ્રાકૃતિક છે.",
+    "Kannada": "ನಮಸ್ಕಾರ! ಇದು AwaazCraft ಧ್ವನಿ ಪೂರ್ವಾವಲೋಕನ.\nಈ ಧ್ವನಿ ಸ್ಪಷ್ಟ ಮತ್ತು ಸಹಜವಾಗಿದೆ.",
+    "Malayalam": "നമസ്കാരം! ഇത് AwaazCraft ശബ്ദ പ്രിവ്യൂ ആണ്.\nഈ ശബ്ദം വ്യക്തവും സ്വാഭാവികവുമാണ്.",
+    "Marathi": "नमस्कार! हा AwaazCraft चा व्हॉइस प्रीव्ह्यू आहे.\nहा आवाज स्पष्ट आणि नैसर्गिक आहे.",
+    "Punjabi": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਇਹ AwaazCraft ਦੀ ਆਵਾਜ਼ ਝਲਕ ਹੈ।\nਇਹ ਆਵਾਜ਼ ਸਾਫ਼ ਅਤੇ ਕੁਦਰਤੀ ਹੈ।",
+    "Tamil": "வணக்கம்! இது AwaazCraft குரல் முன்னோட்டம்.\nஇந்த குரல் தெளிவாகவும் இயல்பாகவும் உள்ளது.",
+    "Telugu": "నమస్కారం! ఇది AwaazCraft వాయిస్ ప్రీవ్యూ.\nఈ స్వరం స్పష్టంగా మరియు సహజంగా ఉంది.",
+}
 
 top_left, top_right = st.columns([1, 2], gap="medium")
 with top_left:
@@ -293,6 +322,15 @@ with top_right:
     with st.container(border=True):
         st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
+        tcol1, tcol2 = st.columns([2, 1])
+        with tcol1:
+            template_name = st.selectbox("Quick template", ["Custom"] + list(quick_templates.keys()))
+        with tcol2:
+            if st.button("Use Template", width="stretch"):
+                if template_name != "Custom":
+                    st.session_state["tts_text"] = quick_templates[template_name]
+            if st.button("Clear Text", width="stretch"):
+                st.session_state["tts_text"] = ""
         text = st.text_area(
             "Enter text",
             placeholder="Type or paste your text here...",
@@ -300,6 +338,10 @@ with top_right:
             key="tts_text",
             label_visibility="collapsed",
         )
+        char_count = len(text)
+        word_count = len(text.split())
+        est_seconds = _estimate_duration_seconds(text)
+        st.caption(f"Characters: {char_count} | Words: {word_count} | Estimated duration: ~{est_seconds}s")
 
 if engine_mode == "Online (Neerja/Neural)":
     with st.container(border=True):
@@ -328,11 +370,33 @@ if engine_mode == "Online (Neerja/Neural)":
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
+            pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
             online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
+        preview_col, generate_col = st.columns([1, 2])
+        with preview_col:
+            preview_clicked = st.button("Preview Voice", width="stretch")
+        with generate_col:
+            generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
 
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
-    elif st.button("Generate Voice", type="primary", width="stretch"):
+    elif preview_clicked:
+        preview_text = voice_preview_lines.get(language, voice_preview_lines["English"])
+        with st.spinner("Generating voice preview..."):
+            try:
+                preview_mp3 = _edge_tts_to_mp3_bytes(
+                    text=preview_text,
+                    voice=voice,
+                    rate_pct=speed_pct,
+                    volume_pct=vol_pct,
+                    pitch_hz=pitch_hz,
+                )
+            except Exception as exc:
+                st.error(f"Could not generate preview: {exc}")
+            else:
+                st.caption(f"Preview for `{voice}`")
+                st.audio(BytesIO(preview_mp3), format="audio/mp3")
+    elif generate_clicked:
         if not text.strip():
             st.warning("Please enter some text first.")
         else:
@@ -343,15 +407,28 @@ if engine_mode == "Online (Neerja/Neural)":
                         voice=voice,
                         rate_pct=speed_pct,
                         volume_pct=vol_pct,
+                        pitch_hz=pitch_hz,
                     )
                 except Exception as exc:
                     st.error(f"Could not generate online voice: {exc}")
                 else:
+                    output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
+                    st.session_state["recent_clips"] = (
+                        [
+                            {
+                                "name": output_name,
+                                "mime": "audio/mpeg",
+                                "format": "audio/mp3",
+                                "data": mp3_bytes,
+                            }
+                        ]
+                        + st.session_state["recent_clips"]
+                    )[:5]
                     st.audio(BytesIO(mp3_bytes), format="audio/mp3")
                     st.download_button(
                         "Download MP3",
                         data=mp3_bytes,
-                        file_name=f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3",
+                        file_name=output_name,
                         mime="audio/mpeg",
                         width="stretch",
                     )
@@ -384,15 +461,43 @@ else:
                 except Exception as exc:
                     st.error(f"Could not generate speech: {exc}")
                 else:
+                    output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
+                    st.session_state["recent_clips"] = (
+                        [
+                            {
+                                "name": output_name,
+                                "mime": "audio/wav",
+                                "format": "audio/wav",
+                                "data": wav_bytes,
+                            }
+                        ]
+                        + st.session_state["recent_clips"]
+                    )[:5]
                     if language == "Hindi" and not selected_voice_id:
                         st.info("Hindi offline voice not found in installed system voices. Using default voice.")
                     st.audio(BytesIO(wav_bytes), format="audio/wav")
                     st.download_button(
                         "Download WAV",
                         data=wav_bytes,
-                        file_name=f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav",
+                        file_name=output_name,
                         mime="audio/wav",
                         width="stretch",
                     )
+
+if st.session_state["recent_clips"]:
+    with st.container(border=True):
+        st.markdown('<p class="section-title">Recent Clips</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-note">Replay or download your last 5 generated clips.</p>', unsafe_allow_html=True)
+        for idx, clip in enumerate(st.session_state["recent_clips"], start=1):
+            st.caption(f"{idx}. {clip['name']}")
+            st.audio(BytesIO(clip["data"]), format=clip["format"])
+            st.download_button(
+                f"Download {clip['name']}",
+                data=clip["data"],
+                file_name=clip["name"],
+                mime=clip["mime"],
+                key=f"recent_download_{idx}_{clip['name']}",
+                width="stretch",
+            )
 
 st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur</p>', unsafe_allow_html=True)
