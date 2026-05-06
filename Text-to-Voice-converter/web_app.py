@@ -17,15 +17,16 @@ except ImportError:
     edge_tts = None
 
 
-st.set_page_config(page_title="TextVoice Web", page_icon="🔊", layout="wide")
+st.set_page_config(page_title="BharatVoice Studio", page_icon="🎙️", layout="wide")
 st.markdown(
     """
     <style>
     .stApp {
         background:
-            radial-gradient(circle at 10% 0%, rgba(99, 102, 241, 0.22), rgba(99, 102, 241, 0) 38%),
-            radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.20), rgba(16, 185, 129, 0) 34%),
-            linear-gradient(160deg, #0b1022 0%, #111936 45%, #0e162d 100%);
+            radial-gradient(circle at 8% 4%, rgba(56, 189, 248, 0.34), rgba(56, 189, 248, 0) 34%),
+            radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.30), rgba(168, 85, 247, 0) 36%),
+            radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.24), rgba(16, 185, 129, 0) 44%),
+            linear-gradient(145deg, #040817 0%, #0c1b3a 46%, #161a48 100%);
         color: #e2e8f0;
     }
     .block-container {
@@ -36,9 +37,9 @@ st.markdown(
         padding-right: 1.2rem;
     }
     .hero {
-        background: linear-gradient(130deg, rgba(99, 102, 241, 0.32), rgba(16, 185, 129, 0.26));
-        border: 1px solid rgba(148, 163, 184, 0.30);
-        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
+        background: linear-gradient(120deg, rgba(59, 130, 246, 0.34), rgba(139, 92, 246, 0.30), rgba(16, 185, 129, 0.26));
+        border: 1px solid rgba(148, 163, 184, 0.34);
+        box-shadow: 0 16px 36px rgba(8, 15, 35, 0.45);
         border-radius: 20px;
         padding: 20px 22px;
         margin: 60px 0px 10px 0px;
@@ -56,10 +57,10 @@ st.markdown(
         line-height: 1.45;
     }
     .glass-card {
-        background: rgba(15, 23, 42, 0.52);
-        border: 1px solid rgba(148, 163, 184, 0.28);
+        background: rgba(15, 23, 42, 0.60);
+        border: 1px solid rgba(148, 163, 184, 0.33);
         border-radius: 18px;
-        box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35);
+        box-shadow: 0 12px 28px rgba(2, 6, 23, 0.42);
         padding: 10px 16px 12px 16px;
         margin-bottom: 10px;
     }
@@ -182,8 +183,8 @@ st.markdown(
     }
     </style>
     <div class="hero">
-      <h1>🔊 TextVoice Converter</h1>
-      <p>Convert your text into natural speech with online Indian neural voices or offline system voices.</p>
+      <h1>🎙️ BharatVoice Studio</h1>
+      <p>Turn text into clear, natural speech with premium Indian neural voices and offline system voices.</p>
     </div>
     <div class="glass-card">
       <span class="stat-chip">Fast generation</span>
@@ -306,26 +307,7 @@ if engine_mode == "Online (Neerja/Neural)":
         st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
         controls_col1, controls_col2 = st.columns(2)
         voice_options_by_language = {
-            "English": [
-                "en-IN-NeerjaNeural",
-                "en-IN-PrabhatNeural",
-                "bn-IN-BashkarNeural",
-                "bn-IN-TanishaaNeural",
-                "gu-IN-DhwaniNeural",
-                "gu-IN-NiranjanNeural",
-                "kn-IN-GaganNeural",
-                "kn-IN-SapnaNeural",
-                "ml-IN-MidhunNeural",
-                "ml-IN-SobhanaNeural",
-                "mr-IN-AarohiNeural",
-                "mr-IN-ManoharNeural",
-                "pa-IN-OjasNeural",
-                "pa-IN-VaaniNeural",
-                "ta-IN-PallaviNeural",
-                "ta-IN-ValluvarNeural",
-                "te-IN-MohanNeural",
-                "te-IN-ShrutiNeural",
-            ],
+            "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
             "Hindi": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
             "Bengali": ["bn-IN-BashkarNeural", "bn-IN-TanishaaNeural"],
             "Gujarati": ["gu-IN-DhwaniNeural", "gu-IN-NiranjanNeural"],
