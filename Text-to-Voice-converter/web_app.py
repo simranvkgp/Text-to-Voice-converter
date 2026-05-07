@@ -125,34 +125,6 @@ st.markdown(
         font-size: 0.92rem;
         margin: 0 0 8px 0;
     }
-    .menu-strip {
-        background: linear-gradient(180deg, rgba(66, 136, 146, 0.2), rgba(130, 168, 142, 0.12));
-        border: 1px solid rgba(64, 112, 106, 0.28);
-        border-radius: 16px;
-        padding: 10px 12px;
-        box-shadow: 0 8px 18px rgba(65, 102, 98, 0.12);
-        margin-top: 8px;
-    }
-    .menu-title {
-        margin: 0 0 8px 0;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 0.94rem;
-        color: var(--text-main);
-        font-weight: 700;
-    }
-    .menu-item {
-        padding: 7px 9px;
-        border-radius: 10px;
-        margin-bottom: 6px;
-        background: rgba(245, 249, 238, 0.85);
-        border: 1px solid rgba(78, 123, 113, 0.22);
-        color: var(--text-main);
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    .menu-item:last-child {
-        margin-bottom: 0;
-    }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background: var(--surface-strong);
         border: 1px solid var(--line) !important;
@@ -194,6 +166,18 @@ st.markdown(
     }
     div[data-baseweb="select"] input {
         color: var(--text-main) !important;
+    }
+    div[data-baseweb="select"] > div {
+        background: #f7faef !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(84, 133, 125, 0.55) !important;
+        box-shadow: 0 6px 14px rgba(72, 110, 103, 0.08);
+    }
+    div[data-baseweb="select"] > div:hover {
+        border: 1px solid rgba(66, 136, 146, 0.65) !important;
+    }
+    div[data-baseweb="select"] svg {
+        fill: rgba(31, 61, 63, 0.8) !important;
     }
     div[data-testid="stSelectbox"] [role="listbox"] {
         background: #f6f9ee !important;
@@ -398,19 +382,6 @@ with top_left:
             ["Online (Neerja/Neural)", "Offline (System voice)"],
             index=0,
             label_visibility="collapsed",
-        )
-        st.markdown(
-            """
-            <div class="menu-strip">
-              <p class="menu-title">Menu Strip</p>
-              <div class="menu-item">Dashboard Home</div>
-              <div class="menu-item">Voice Studio</div>
-              <div class="menu-item">Export & Downloads</div>
-              <div class="menu-item">Audio Settings</div>
-              <div class="menu-item">Appearance</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
         )
 with top_right:
     with st.container(border=True):
