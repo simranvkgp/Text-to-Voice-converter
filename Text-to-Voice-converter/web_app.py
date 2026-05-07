@@ -22,17 +22,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background: linear-gradient(
-            180deg,
-            #428892 0%,
-            #428892 34%,
-            #82a88e 34%,
-            #82a88e 55%,
-            #b4c08f 55%,
-            #b4c08f 73%,
-            #d0d8b6 73%,
-            #d0d8b6 100%
-        );
+        background: linear-gradient(135deg, #428892 0%, #82a88e 52%, #d0d8b6 100%);
         color: #1f2f2f;
     }
     .block-container {
@@ -291,21 +281,7 @@ def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
 
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
-if "online_voice_selection" not in st.session_state:
-    st.session_state["online_voice_selection"] = "en-IN-NeerjaNeural"
 
-voice_preview_lines = {
-    "English": "Hello, this is AwaazCraft voice preview.\nYour selected voice is clear and natural.",
-    "Hindi": "नमस्ते! यह AwaazCraft का वॉइस प्रीव्यू है।\nयह आवाज़ साफ़ और प्राकृतिक है।",
-    "Bengali": "নমস্কার! এটি AwaazCraft-এর ভয়েস প্রিভিউ।\nএই কণ্ঠস্বরটি স্পষ্ট এবং স্বাভাবিক।",
-    "Gujarati": "નમસ્તે! આ AwaazCraft નો વોઇસ પ્રિવ્યૂ છે.\nઆ અવાજ સ્પષ્ટ અને પ્રાકૃતિક છે.",
-    "Kannada": "ನಮಸ್ಕಾರ! ಇದು AwaazCraft ಧ್ವನಿ ಪೂರ್ವಾವಲೋಕನ.\nಈ ಧ್ವನಿ ಸ್ಪષ્ટ ಮತ್ತು ಸಹಜವಾಗಿದೆ.",
-    "Malayalam": "നമസ്കാരം! ഇത് AwaazCraft ശബ്ദ പ്രിവ്യൂ ആണ്.\nഈ ശബ്ദം വ്യക്തവും സ്വാഭാവികവുമാണ്.",
-    "Marathi": "नमस्कार! हा AwaazCraft चा व्हॉइस प्रीव्ह्यू आहे.\nहा आवाज स्पष्ट आणि नैसर्गिक आहे.",
-    "Punjabi": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਇਹ AwaazCraft ਦੀ ਆਵਾਜ਼ ਝਲਕ ਹੈ।\nਇਹ ਆਵਾਜ਼ ਸਾਫ਼ ਅਤੇ ਕੁਦਰਤੀ ਹੈ।",
-    "Tamil": "வணக்கம்! இது AwaazCraft குரல் முன்னோட்டம்.\nஇந்த குரல் தெளிவாகவும் இயல்பாகவும் உள்ளது.",
-    "Telugu": "నమస్కారం! ఇది AwaazCraft వాయిస్ ప్రీవ్యూ.\nఈ స్వరం స్పష్టంగా మరియు సహజంగా ఉంది.",
-}
 
 
 top_left, top_right = st.columns([1, 2], gap="medium")
@@ -356,31 +332,14 @@ if engine_mode == "Online (Neerja/Neural)":
             "Tamil": ["ta-IN-PallaviNeural", "ta-IN-ValluvarNeural"],
             "Telugu": ["te-IN-MohanNeural", "te-IN-ShrutiNeural"],
         }
-        preview_voice = None
         with controls_col1:
             language = st.selectbox("Language", list(voice_options_by_language.keys()), index=0)
             voices_list = voice_options_by_language[language]
-            if st.session_state["online_voice_selection"] not in voices_list:
-                st.session_state["online_voice_selection"] = voices_list[0]
             voice = st.selectbox(
                 "Online Voice",
                 voices_list,
-                index=voices_list.index(st.session_state["online_voice_selection"]),
-                key="online_voice_selection",
-                format_func=lambda vid: f"🔊  {vid}",
+                index=0,
             )
-            st.caption("Tap a 🔊 below to preview that voice.")
-            pv_cols = st.columns(len(voices_list))
-            for idx, vid in enumerate(voices_list):
-                with pv_cols[idx]:
-                    if st.button(
-                        "🔊",
-                        key=f"pv_{language}_{vid}",
-                        help=f"Preview {vid}",
-                        width="stretch",
-                    ):
-                        st.session_state["online_voice_selection"] = vid
-                        st.session_state["preview_voice_clicked"] = vid
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
@@ -388,26 +347,8 @@ if engine_mode == "Online (Neerja/Neural)":
             online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
             generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
 
-        preview_voice = st.session_state.pop("preview_voice_clicked", None)
-
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
-    elif preview_voice is not None:
-        preview_text = voice_preview_lines.get(language, voice_preview_lines["English"])
-        with st.spinner("Generating voice preview..."):
-            try:
-                preview_mp3 = _edge_tts_to_mp3_bytes(
-                    text=preview_text,
-                    voice=preview_voice,
-                    rate_pct=speed_pct,
-                    volume_pct=vol_pct,
-                    pitch_hz=pitch_hz,
-                )
-            except Exception as exc:
-                st.error(f"Could not generate preview: {exc}")
-            else:
-                st.caption(f"Preview for `{preview_voice}`")
-                st.audio(BytesIO(preview_mp3), format="audio/mp3")
     elif generate_clicked:
         if not text.strip():
             st.warning("Please enter some text first.")
