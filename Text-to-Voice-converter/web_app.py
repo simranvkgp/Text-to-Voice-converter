@@ -285,15 +285,7 @@ def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
 
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
-if "recent_clips" not in st.session_state:
-    st.session_state["recent_clips"] = []
 
-quick_templates = {
-    "Greeting": "Hello and welcome! Thank you for listening to this audio clip.",
-    "YouTube Intro": "Hi everyone, welcome back to my channel. Let's get started.",
-    "Hindi Greeting": "नमस्ते! आपका स्वागत है। यह एक हिंदी वॉइस सैंपल है।",
-    "Motivation": "Believe in yourself, stay consistent, and success will follow.",
-}
 voice_preview_lines = {
     "English": "Hello, this is AwaazCraft voice preview.\nYour selected voice is clear and natural.",
     "Hindi": "नमस्ते! यह AwaazCraft का वॉइस प्रीव्यू है।\nयह आवाज़ साफ़ और प्राकृतिक है।",
@@ -322,13 +314,8 @@ with top_right:
     with st.container(border=True):
         st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
-        tcol1, tcol2 = st.columns([2, 1])
-        with tcol1:
-            template_name = st.selectbox("Quick template", ["Custom"] + list(quick_templates.keys()))
-        with tcol2:
-            if st.button("Use Template", width="stretch"):
-                if template_name != "Custom":
-                    st.session_state["tts_text"] = quick_templates[template_name]
+        _, clear_col = st.columns([4, 1])
+        with clear_col:
             if st.button("Clear Text", width="stretch"):
                 st.session_state["tts_text"] = ""
         text = st.text_area(
@@ -360,33 +347,43 @@ if engine_mode == "Online (Neerja/Neural)":
             "Tamil": ["ta-IN-PallaviNeural", "ta-IN-ValluvarNeural"],
             "Telugu": ["te-IN-MohanNeural", "te-IN-ShrutiNeural"],
         }
+        preview_voice = None
         with controls_col1:
             language = st.selectbox("Language", list(voice_options_by_language.keys()), index=0)
+            voices_list = voice_options_by_language[language]
             voice = st.selectbox(
                 "Online Voice",
-                voice_options_by_language[language],
+                voices_list,
                 index=0,
+                format_func=lambda vid: f"🔊  {vid}",
             )
+            st.caption("Tap a 🔊 below to preview that voice.")
+            pv_cols = st.columns(len(voices_list))
+            for idx, vid in enumerate(voices_list):
+                with pv_cols[idx]:
+                    if st.button(
+                        "🔊",
+                        key=f"pv_{language}_{vid}",
+                        help=f"Preview {vid}",
+                        width="stretch",
+                    ):
+                        preview_voice = vid
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
             pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
             online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
-        preview_col, generate_col = st.columns([1, 2])
-        with preview_col:
-            preview_clicked = st.button("Preview Voice", width="stretch")
-        with generate_col:
             generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
 
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
-    elif preview_clicked:
+    elif preview_voice is not None:
         preview_text = voice_preview_lines.get(language, voice_preview_lines["English"])
         with st.spinner("Generating voice preview..."):
             try:
                 preview_mp3 = _edge_tts_to_mp3_bytes(
                     text=preview_text,
-                    voice=voice,
+                    voice=preview_voice,
                     rate_pct=speed_pct,
                     volume_pct=vol_pct,
                     pitch_hz=pitch_hz,
@@ -394,7 +391,7 @@ if engine_mode == "Online (Neerja/Neural)":
             except Exception as exc:
                 st.error(f"Could not generate preview: {exc}")
             else:
-                st.caption(f"Preview for `{voice}`")
+                st.caption(f"Preview for `{preview_voice}`")
                 st.audio(BytesIO(preview_mp3), format="audio/mp3")
     elif generate_clicked:
         if not text.strip():
@@ -413,17 +410,6 @@ if engine_mode == "Online (Neerja/Neural)":
                     st.error(f"Could not generate online voice: {exc}")
                 else:
                     output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
-                    st.session_state["recent_clips"] = (
-                        [
-                            {
-                                "name": output_name,
-                                "mime": "audio/mpeg",
-                                "format": "audio/mp3",
-                                "data": mp3_bytes,
-                            }
-                        ]
-                        + st.session_state["recent_clips"]
-                    )[:5]
                     st.audio(BytesIO(mp3_bytes), format="audio/mp3")
                     st.download_button(
                         "Download MP3",
@@ -462,17 +448,6 @@ else:
                     st.error(f"Could not generate speech: {exc}")
                 else:
                     output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
-                    st.session_state["recent_clips"] = (
-                        [
-                            {
-                                "name": output_name,
-                                "mime": "audio/wav",
-                                "format": "audio/wav",
-                                "data": wav_bytes,
-                            }
-                        ]
-                        + st.session_state["recent_clips"]
-                    )[:5]
                     if language == "Hindi" and not selected_voice_id:
                         st.info("Hindi offline voice not found in installed system voices. Using default voice.")
                     st.audio(BytesIO(wav_bytes), format="audio/wav")
@@ -483,21 +458,5 @@ else:
                         mime="audio/wav",
                         width="stretch",
                     )
-
-if st.session_state["recent_clips"]:
-    with st.container(border=True):
-        st.markdown('<p class="section-title">Recent Clips</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-note">Replay or download your last 5 generated clips.</p>', unsafe_allow_html=True)
-        for idx, clip in enumerate(st.session_state["recent_clips"], start=1):
-            st.caption(f"{idx}. {clip['name']}")
-            st.audio(BytesIO(clip["data"]), format=clip["format"])
-            st.download_button(
-                f"Download {clip['name']}",
-                data=clip["data"],
-                file_name=clip["name"],
-                mime=clip["mime"],
-                key=f"recent_download_{idx}_{clip['name']}",
-                width="stretch",
-            )
 
 st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur</p>', unsafe_allow_html=True)
