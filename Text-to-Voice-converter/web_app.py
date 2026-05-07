@@ -413,7 +413,6 @@ st.markdown(
 def _render_stateful_media(data: bytes, mime: str, element_id: str) -> None:
     b64 = base64.b64encode(data).decode("ascii")
     safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", element_id)
-    source_sig = f"{len(data)}_{sum(data[:128]) % 100000}"
     html = f"""
     <div style="width: 100%;">
       <audio id="{safe_id}" controls style="width: 100%;">
@@ -423,31 +422,18 @@ def _render_stateful_media(data: bytes, mime: str, element_id: str) -> None:
     <script>
       (function() {{
         const id = "{safe_id}";
-        const sourceSig = "{source_sig}";
         const el = document.getElementById(id);
         if (!el) return;
 
-        const store = window.localStorage;
         const tKey = id + "::t";
         const pKey = id + "::playing";
-        const sKey = id + "::sig";
-
-        const prevSig = store.getItem(sKey) || "";
-        if (prevSig !== sourceSig) {{
-          // New media generated: start from beginning.
-          store.setItem(tKey, "0");
-          store.setItem(pKey, "0");
-          store.setItem(sKey, sourceSig);
-        }}
-
-        const savedT = Number(store.getItem(tKey) || "0");
-        const wasPlaying = (store.getItem(pKey) || "0") === "1";
+        const savedT = Number(sessionStorage.getItem(tKey) || "0");
+        const wasPlaying = (sessionStorage.getItem(pKey) || "0") === "1";
 
         const saveState = () => {{
           try {{
-            store.setItem(tKey, String(el.currentTime || 0));
-            store.setItem(pKey, el.paused ? "0" : "1");
-            store.setItem(sKey, sourceSig);
+            sessionStorage.setItem(tKey, String(el.currentTime || 0));
+            sessionStorage.setItem(pKey, el.paused ? "0" : "1");
           }} catch (e) {{}}
         }};
 
@@ -455,17 +441,16 @@ def _render_stateful_media(data: bytes, mime: str, element_id: str) -> None:
         el.addEventListener("pause", saveState);
         el.addEventListener("play", saveState);
         el.addEventListener("seeking", saveState);
-        window.addEventListener("beforeunload", saveState);
 
         el.addEventListener("loadedmetadata", () => {{
           try {{
-            if (prevSig === sourceSig && Number.isFinite(savedT) && savedT > 0 && savedT < (el.duration || 1e12)) {{
+            if (Number.isFinite(savedT) && savedT > 0 && savedT < (el.duration || 1e12)) {{
               el.currentTime = savedT;
             }}
           }} catch (e) {{}}
           // Try to continue if it was playing before rerun.
           // Note: browsers may block autoplay; user can press play to resume.
-          if (prevSig === sourceSig && wasPlaying) {{
+          if (wasPlaying) {{
             const p = el.play();
             if (p && p.catch) p.catch(() => {{}});
           }}
