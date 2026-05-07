@@ -31,9 +31,9 @@ st.markdown(
         --cream: #d0d8b6;
         --surface: rgba(248, 251, 242, 0.75);
         --surface-strong: rgba(245, 249, 238, 0.92);
-        --text-main: #1e3335;
-        --text-soft: #42615c;
-        --text-muted: #56716b;
+        --text-main: #102426;
+        --text-soft: #1f3d3f;
+        --text-muted: #355557;
         --line: rgba(73, 118, 109, 0.24);
         --shadow-soft: 0 10px 30px rgba(62, 98, 97, 0.14);
     }
@@ -76,7 +76,7 @@ st.markdown(
     }
     .hero h1 {
         margin: 0;
-        color: #f4f6ec;
+        color: #ffffff;
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 2.15rem;
         font-weight: 700;
@@ -84,7 +84,7 @@ st.markdown(
     }
     .hero p {
         margin: 7px 0 0 0;
-        color: #eff4e2;
+        color: #f7fbf1;
         font-size: 1rem;
         line-height: 1.45;
     }
@@ -111,7 +111,7 @@ st.markdown(
         font-size: 0.82rem;
         border: 1px solid rgba(70, 114, 106, 0.34);
         background: rgba(208, 216, 182, 0.85);
-        color: #244042;
+        color: #183234;
     }
     .section-title {
         color: var(--text-main);
@@ -124,6 +124,34 @@ st.markdown(
         color: var(--text-soft);
         font-size: 0.92rem;
         margin: 0 0 8px 0;
+    }
+    .menu-strip {
+        background: linear-gradient(180deg, rgba(66, 136, 146, 0.2), rgba(130, 168, 142, 0.12));
+        border: 1px solid rgba(64, 112, 106, 0.28);
+        border-radius: 16px;
+        padding: 10px 12px;
+        box-shadow: 0 8px 18px rgba(65, 102, 98, 0.12);
+        margin-top: 8px;
+    }
+    .menu-title {
+        margin: 0 0 8px 0;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.94rem;
+        color: var(--text-main);
+        font-weight: 700;
+    }
+    .menu-item {
+        padding: 7px 9px;
+        border-radius: 10px;
+        margin-bottom: 6px;
+        background: rgba(245, 249, 238, 0.85);
+        border: 1px solid rgba(78, 123, 113, 0.22);
+        color: var(--text-main);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .menu-item:last-child {
+        margin-bottom: 0;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background: var(--surface-strong);
@@ -142,10 +170,14 @@ st.markdown(
     }
     div[data-testid="stTextArea"] textarea {
         background: #f7faef !important;
-        color: #203438 !important;
+        color: #102426 !important;
         border: 1px solid rgba(84, 133, 125, 0.55) !important;
         border-radius: 12px !important;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    div[data-testid="stTextArea"] textarea::placeholder {
+        color: #4f6d6f !important;
+        opacity: 1 !important;
     }
     div[data-testid="stTextArea"] textarea:focus {
         border: 1px solid #428892 !important;
@@ -158,6 +190,9 @@ st.markdown(
     }
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] span {
+        color: var(--text-main) !important;
+    }
+    div[data-baseweb="select"] input {
         color: var(--text-main) !important;
     }
     div[data-testid="stSelectbox"] [role="listbox"] {
@@ -193,7 +228,7 @@ st.markdown(
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: var(--text-soft);
+        color: #2f5052;
         font-size: 0.85rem;
         letter-spacing: 0.01em;
     }
@@ -363,6 +398,19 @@ with top_left:
             ["Online (Neerja/Neural)", "Offline (System voice)"],
             index=0,
             label_visibility="collapsed",
+        )
+        st.markdown(
+            """
+            <div class="menu-strip">
+              <p class="menu-title">Menu Strip</p>
+              <div class="menu-item">Dashboard Home</div>
+              <div class="menu-item">Voice Studio</div>
+              <div class="menu-item">Export & Downloads</div>
+              <div class="menu-item">Audio Settings</div>
+              <div class="menu-item">Appearance</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 with top_right:
     with st.container(border=True):
