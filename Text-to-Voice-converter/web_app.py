@@ -247,10 +247,77 @@ st.markdown(
         margin: 10px 0;
         border-radius: 99px;
     }
+    .nav-strip {
+        background: linear-gradient(180deg, rgba(16, 36, 38, 0.88), rgba(31, 61, 63, 0.82));
+        border: 1px solid rgba(66, 136, 146, 0.26);
+        border-radius: 18px;
+        padding: 10px 10px;
+        box-shadow: 0 14px 30px rgba(20, 40, 40, 0.18);
+        position: sticky;
+        top: 12px;
+    }
+    .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px 12px 10px;
+        border-bottom: 1px solid rgba(208, 216, 182, 0.14);
+        margin-bottom: 10px;
+    }
+    .nav-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(66, 136, 146, 0.92), rgba(130, 168, 142, 0.86));
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 800;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .nav-name {
+        color: rgba(247, 251, 241, 0.98);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        font-size: 0.98rem;
+        margin: 0;
+        line-height: 1.1;
+    }
+    .nav-sub {
+        color: rgba(247, 251, 241, 0.72);
+        font-size: 0.78rem;
+        margin: 2px 0 0 0;
+    }
+    .nav-item {
+        padding: 10px 10px;
+        border-radius: 14px;
+        border: 1px solid rgba(208, 216, 182, 0.12);
+        background: rgba(245, 249, 238, 0.06);
+        color: rgba(247, 251, 241, 0.92);
+        font-weight: 650;
+        font-size: 0.86rem;
+        margin-bottom: 8px;
+        transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+    .nav-item:hover {
+        transform: translateY(-1px);
+        background: rgba(245, 249, 238, 0.1);
+        border-color: rgba(208, 216, 182, 0.22);
+    }
+    .nav-item-active {
+        background: linear-gradient(135deg, rgba(66, 136, 146, 0.45), rgba(130, 168, 142, 0.28));
+        border-color: rgba(130, 168, 142, 0.42);
+    }
+    .nav-mini {
+        color: rgba(247, 251, 241, 0.62);
+        font-size: 0.76rem;
+        padding: 6px 10px 2px 10px;
+    }
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: rgba(245, 249, 238, 0.95);
+        color: #ffffff;
         font-size: 0.85rem;
         letter-spacing: 0.01em;
         background: linear-gradient(135deg, rgba(16, 36, 38, 0.75), rgba(31, 61, 63, 0.7));
@@ -258,6 +325,9 @@ st.markdown(
         padding: 10px 14px;
         border-radius: 14px;
         box-shadow: 0 10px 22px rgba(20, 40, 40, 0.18);
+    }
+    .app-footer a, .app-footer span {
+        color: #ffffff !important;
     }
     @media (max-width: 900px) {
         .block-container {
@@ -416,8 +486,32 @@ if "show_side_panel" not in st.session_state:
     st.session_state["show_side_panel"] = True
 
 
-panel_ratio = [0.34, 0.66] if st.session_state["show_side_panel"] else [0.08, 0.92]
-side_col, main_col = st.columns(panel_ratio, gap="medium")
+layout_ratio = [0.18, 0.28, 0.54] if st.session_state["show_side_panel"] else [0.18, 0.08, 0.74]
+nav_col, side_col, main_col = st.columns(layout_ratio, gap="medium")
+
+with nav_col:
+    st.markdown(
+        """
+        <div class="nav-strip">
+          <div class="nav-brand">
+            <div class="nav-logo">A</div>
+            <div>
+              <p class="nav-name">AwaazCraft</p>
+              <p class="nav-sub">Workspace</p>
+            </div>
+          </div>
+
+          <div class="nav-item nav-item-active">Voice Studio</div>
+          <div class="nav-item">Dashboard</div>
+          <div class="nav-item">Exports</div>
+          <div class="nav-item">History</div>
+          <div class="nav-item">Settings</div>
+
+          <div class="nav-mini">SaaS-style navigation strip</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 with side_col:
     if st.session_state["show_side_panel"]:
