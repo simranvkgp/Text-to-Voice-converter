@@ -33,6 +33,7 @@ st.markdown(
         --surface-strong: rgba(245, 249, 238, 0.92);
         --text-main: #1e3335;
         --text-soft: #42615c;
+        --text-muted: #56716b;
         --line: rgba(73, 118, 109, 0.24);
         --shadow-soft: 0 10px 30px rgba(62, 98, 97, 0.14);
     }
@@ -50,6 +51,20 @@ st.markdown(
         padding-bottom: 1.2rem;
         padding-left: 1.2rem;
         padding-right: 1.2rem;
+    }
+    p, span, label, li, .stMarkdown, div[data-testid="stMarkdownContainer"] p {
+        color: var(--text-main);
+    }
+    div[data-testid="stCaptionContainer"], div[data-testid="stCaptionContainer"] p {
+        color: var(--text-muted) !important;
+    }
+    div[data-testid="stTextInput"] label,
+    div[data-testid="stTextArea"] label,
+    div[data-testid="stSelectbox"] label,
+    div[data-testid="stSlider"] label,
+    div[data-testid="stRadio"] label {
+        color: var(--text-soft) !important;
+        font-weight: 600 !important;
     }
     .hero {
         background: linear-gradient(120deg, rgba(66, 136, 146, 0.92), rgba(130, 168, 142, 0.86), rgba(180, 192, 143, 0.8));
@@ -139,7 +154,15 @@ st.markdown(
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stRadio"] > div,
     div[data-testid="stSlider"] > div {
-        color: #1f3538 !important;
+        color: var(--text-main) !important;
+    }
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] span {
+        color: var(--text-main) !important;
+    }
+    div[data-testid="stSelectbox"] [role="listbox"] {
+        background: #f6f9ee !important;
+        border: 1px solid rgba(84, 133, 125, 0.35) !important;
     }
     div[data-testid="stButton"] button, div[data-testid="baseButton-secondary"] {
         border-radius: 14px !important;
@@ -360,6 +383,22 @@ with top_right:
         word_count = len(text.split())
         est_seconds = _estimate_duration_seconds(text)
         st.caption(f"Characters: {char_count} | Words: {word_count} | Estimated duration: ~{est_seconds}s")
+
+with st.container(border=True):
+    st.markdown('<p class="section-title">Quick Options</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-note">Adjust style preferences in a compact horizontal layout.</p>', unsafe_allow_html=True)
+    opt_col1, opt_col2, opt_col3, opt_col4 = st.columns(4, gap="small")
+    with opt_col1:
+        tone_mode = st.selectbox("Tone", ["Balanced", "Professional", "Warm"], index=0)
+    with opt_col2:
+        delivery_mode = st.selectbox("Delivery", ["Natural", "Narration", "Expressive"], index=0)
+    with opt_col3:
+        pacing_mode = st.selectbox("Pacing", ["Standard", "Slightly Slow", "Slightly Fast"], index=0)
+    with opt_col4:
+        output_focus = st.selectbox("Focus", ["Clarity", "Smoothness", "Energy"], index=0)
+    st.caption(
+        f"Selected: {tone_mode} tone • {delivery_mode} delivery • {pacing_mode} pacing • {output_focus} focus"
+    )
 
 if engine_mode == "Online (Neerja/Neural)":
     with st.container(border=True):
