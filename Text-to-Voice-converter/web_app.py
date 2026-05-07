@@ -336,11 +336,11 @@ st.markdown(
         color: #ffffff !important;
         font-size: 0.85rem;
         letter-spacing: 0.01em;
-        background: linear-gradient(135deg, rgba(16, 36, 38, 0.75), rgba(31, 61, 63, 0.7));
-        border: 1px solid rgba(66, 136, 146, 0.28);
+        background: linear-gradient(135deg, rgba(66, 136, 146, 0.72), rgba(130, 168, 142, 0.68));
+        border: 1px solid rgba(66, 136, 146, 0.22);
         padding: 10px 14px;
         border-radius: 14px;
-        box-shadow: 0 10px 22px rgba(20, 40, 40, 0.18);
+        box-shadow: 0 8px 18px rgba(48, 88, 86, 0.16);
     }
     .app-footer, .app-footer * {
         color: #ffffff !important;
