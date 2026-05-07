@@ -20,10 +20,29 @@ except ImportError:
 st.set_page_config(page_title="AwaazCraft", page_icon="🎙️", layout="wide")
 st.markdown(
     """
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
     <style>
+    :root {
+        --teal: #428892;
+        --sage: #82a88e;
+        --olive: #b4c08f;
+        --cream: #d0d8b6;
+        --surface: rgba(248, 251, 242, 0.75);
+        --surface-strong: rgba(245, 249, 238, 0.92);
+        --text-main: #1e3335;
+        --text-soft: #42615c;
+        --line: rgba(73, 118, 109, 0.24);
+        --shadow-soft: 0 10px 30px rgba(62, 98, 97, 0.14);
+    }
     .stApp {
-        background: linear-gradient(135deg, #428892 0%, #82a88e 52%, #d0d8b6 100%);
-        color: #1f2f2f;
+        background:
+            radial-gradient(circle at 12% 8%, rgba(66, 136, 146, 0.22), transparent 34%),
+            radial-gradient(circle at 88% 12%, rgba(130, 168, 142, 0.2), transparent 32%),
+            linear-gradient(140deg, #edf3ea 0%, #e7efe3 45%, #dee8d6 100%);
+        color: var(--text-main);
+        font-family: 'Inter', sans-serif;
     }
     .block-container {
         max-width: 1280px;
@@ -33,18 +52,20 @@ st.markdown(
         padding-right: 1.2rem;
     }
     .hero {
-        background: linear-gradient(120deg, rgba(66, 136, 146, 0.94), rgba(130, 168, 142, 0.88));
-        border: 1px solid rgba(49, 89, 95, 0.35);
-        box-shadow: 0 10px 24px rgba(45, 72, 76, 0.24);
-        border-radius: 20px;
-        padding: 20px 22px;
+        background: linear-gradient(120deg, rgba(66, 136, 146, 0.92), rgba(130, 168, 142, 0.86), rgba(180, 192, 143, 0.8));
+        border: 1px solid rgba(66, 136, 146, 0.32);
+        box-shadow: var(--shadow-soft);
+        border-radius: 22px;
+        padding: 22px 24px;
         margin: 60px 0px 10px 0px;
     }
     .hero h1 {
         margin: 0;
         color: #f4f6ec;
-        font-size: 2.1rem;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 2.15rem;
         font-weight: 700;
+        letter-spacing: -0.01em;
     }
     .hero p {
         margin: 7px 0 0 0;
@@ -53,12 +74,18 @@ st.markdown(
         line-height: 1.45;
     }
     .glass-card {
-        background: rgba(240, 244, 229, 0.62);
-        border: 1px solid rgba(80, 116, 103, 0.34);
+        background: var(--surface);
+        border: 1px solid var(--line);
         border-radius: 18px;
-        box-shadow: 0 8px 20px rgba(56, 84, 79, 0.18);
+        box-shadow: var(--shadow-soft);
         padding: 10px 16px 12px 16px;
         margin-bottom: 10px;
+        backdrop-filter: blur(8px);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .glass-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px rgba(54, 89, 86, 0.18);
     }
     .stat-chip {
         display: inline-block;
@@ -72,30 +99,38 @@ st.markdown(
         color: #244042;
     }
     .section-title {
-        color: #244042;
+        color: var(--text-main);
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 1.12rem;
         font-weight: 700;
         margin: 0 0 2px 0;
     }
     .section-note {
-        color: #425d58;
+        color: var(--text-soft);
         font-size: 0.92rem;
         margin: 0 0 8px 0;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(244, 247, 233, 0.55);
-        border: 1px solid rgba(98, 137, 122, 0.32) !important;
-        border-radius: 16px !important;
+        background: var(--surface-strong);
+        border: 1px solid var(--line) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 8px 24px rgba(67, 104, 96, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(63, 100, 91, 0.16);
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         padding-top: 0.55rem;
         padding-bottom: 0.55rem;
     }
     div[data-testid="stTextArea"] textarea {
-        background: #f3f6ea !important;
+        background: #f7faef !important;
         color: #203438 !important;
-        border: 1px solid #6d9b89 !important;
+        border: 1px solid rgba(84, 133, 125, 0.55) !important;
         border-radius: 12px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     div[data-testid="stTextArea"] textarea:focus {
         border: 1px solid #428892 !important;
@@ -107,24 +142,35 @@ st.markdown(
         color: #1f3538 !important;
     }
     div[data-testid="stButton"] button, div[data-testid="baseButton-secondary"] {
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         border: 1px solid rgba(58, 110, 108, 0.48) !important;
-        background: linear-gradient(135deg, #428892, #6f9f8e) !important;
+        background: linear-gradient(135deg, var(--teal), var(--sage)) !important;
         color: #f5f8ec !important;
         font-weight: 600 !important;
-        box-shadow: 0 8px 18px rgba(66, 136, 146, 0.22) !important;
+        box-shadow: 0 8px 18px rgba(66, 136, 146, 0.2) !important;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+    div[data-testid="stButton"] button:hover, div[data-testid="baseButton-secondary"]:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px rgba(66, 136, 146, 0.26) !important;
+        filter: saturate(1.05);
     }
     div[data-testid="stDownloadButton"] button {
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         border: 1px solid rgba(77, 115, 95, 0.50) !important;
-        background: linear-gradient(135deg, #82a88e, #6f9f8e) !important;
+        background: linear-gradient(135deg, var(--sage), var(--olive)) !important;
         color: #f5f8ec !important;
         font-weight: 600 !important;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    div[data-testid="stDownloadButton"] button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(108, 132, 106, 0.24);
     }
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: #3f5955;
+        color: var(--text-soft);
         font-size: 0.85rem;
         letter-spacing: 0.01em;
     }
