@@ -209,6 +209,18 @@ st.markdown(
         transform: translateY(-1px);
         box-shadow: 0 10px 20px rgba(108, 132, 106, 0.24);
     }
+    /* Tooltips (fix dark tooltip text) */
+    div[role="tooltip"],
+    div[role="tooltip"] *,
+    [data-baseweb="tooltip"],
+    [data-baseweb="tooltip"] * {
+        color: #ffffff !important;
+    }
+    [data-baseweb="tooltip"] {
+        background: rgba(16, 36, 38, 0.92) !important;
+        border: 1px solid rgba(130, 168, 142, 0.35) !important;
+        box-shadow: 0 10px 22px rgba(20, 40, 40, 0.22) !important;
+    }
     .side-panel-header {
         display: flex;
         align-items: center;
@@ -317,7 +329,7 @@ st.markdown(
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: #ffffff;
+        color: #ffffff !important;
         font-size: 0.85rem;
         letter-spacing: 0.01em;
         background: linear-gradient(135deg, rgba(16, 36, 38, 0.75), rgba(31, 61, 63, 0.7));
@@ -326,7 +338,7 @@ st.markdown(
         border-radius: 14px;
         box-shadow: 0 10px 22px rgba(20, 40, 40, 0.18);
     }
-    .app-footer a, .app-footer span {
+    .app-footer, .app-footer * {
         color: #ffffff !important;
     }
     @media (max-width: 900px) {
@@ -534,7 +546,7 @@ with side_col:
                 unsafe_allow_html=True,
             )
     else:
-        if st.button("☰", help="Show Voice Engine + Quick Options", width="stretch"):
+        if st.button("☰", width="stretch"):
             st.session_state["show_side_panel"] = True
 
 with main_col:
