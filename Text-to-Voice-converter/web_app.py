@@ -143,6 +143,7 @@ st.markdown(
     div[data-testid="stTextArea"] textarea {
         background: #f7faef !important;
         color: #102426 !important;
+        caret-color: #000000 !important;
         border: 1px solid rgba(84, 133, 125, 0.55) !important;
         border-radius: 12px !important;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -166,6 +167,9 @@ st.markdown(
     }
     div[data-baseweb="select"] input {
         color: var(--text-main) !important;
+    }
+    input, textarea {
+        caret-color: #000000 !important;
     }
     div[data-baseweb="select"] > div {
         background: #f7faef !important;
@@ -393,7 +397,7 @@ st.markdown(
     </style>
     <div class="hero">
       <h1>🎙️ AwaazCraft</h1>
-      <p>Turn text into clear, natural speech with premium Indian neural voices and offline system voices.</p>
+      <p>Turn text into clear, natural speech with premium Indian neural voices.</p>
     </div>
     <div class="glass-card">
       <span class="stat-chip">Fast generation</span>
