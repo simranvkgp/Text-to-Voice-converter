@@ -2,11 +2,9 @@ import os
 import tempfile
 import asyncio
 import re
-import base64
 from io import BytesIO
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 try:
     import pyttsx3
@@ -410,57 +408,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-def _render_stateful_media(data: bytes, mime: str, element_id: str) -> None:
-    b64 = base64.b64encode(data).decode("ascii")
-    safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", element_id)
-    html = f"""
-    <div style="width: 100%;">
-      <audio id="{safe_id}" controls style="width: 100%;">
-        <source src="data:{mime};base64,{b64}" type="{mime}">
-      </audio>
-    </div>
-    <script>
-      (function() {{
-        const id = "{safe_id}";
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        const tKey = id + "::t";
-        const pKey = id + "::playing";
-        const savedT = Number(sessionStorage.getItem(tKey) || "0");
-        const wasPlaying = (sessionStorage.getItem(pKey) || "0") === "1";
-
-        const saveState = () => {{
-          try {{
-            sessionStorage.setItem(tKey, String(el.currentTime || 0));
-            sessionStorage.setItem(pKey, el.paused ? "0" : "1");
-          }} catch (e) {{}}
-        }};
-
-        el.addEventListener("timeupdate", saveState);
-        el.addEventListener("pause", saveState);
-        el.addEventListener("play", saveState);
-        el.addEventListener("seeking", saveState);
-
-        el.addEventListener("loadedmetadata", () => {{
-          try {{
-            if (Number.isFinite(savedT) && savedT > 0 && savedT < (el.duration || 1e12)) {{
-              el.currentTime = savedT;
-            }}
-          }} catch (e) {{}}
-          // Try to continue if it was playing before rerun.
-          // Note: browsers may block autoplay; user can press play to resume.
-          if (wasPlaying) {{
-            const p = el.play();
-            if (p && p.catch) p.catch(() => {{}});
-          }}
-        }});
-      }})();
-    </script>
-    """
-    components.html(html, height=72)
-
-
 def _tts_to_wav_bytes(text: str, rate: int, volume: float, voice_id: str | None = None) -> bytes:
     """Generate WAV bytes using local pyttsx3 engine."""
     engine = pyttsx3.init()
@@ -550,12 +497,8 @@ def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
 
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
-if "tts_text_editor" not in st.session_state:
-    st.session_state["tts_text_editor"] = st.session_state["tts_text"]
 if "show_side_panel" not in st.session_state:
     st.session_state["show_side_panel"] = True
-if "generated_media" not in st.session_state:
-    st.session_state["generated_media"] = None
 
 
 panel_ratio = [0.30, 0.70] if st.session_state["show_side_panel"] else [0.08, 0.92]
@@ -613,39 +556,21 @@ with main_col:
     with st.container(border=True):
         st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
-        with st.form("text_editor_form", clear_on_submit=False):
-            st.text_area(
-                "Enter text",
-                placeholder="Type or paste your text here...",
-                height=220,
-                key="tts_text_editor",
-                label_visibility="collapsed",
-            )
-            bcol1, bcol2 = st.columns([1, 1])
-            with bcol1:
-                apply_text = st.form_submit_button("Apply Text", width="stretch")
-            with bcol2:
-                clear_text = st.form_submit_button("Clear Text", width="stretch")
-
-            if apply_text:
-                st.session_state["tts_text"] = st.session_state["tts_text_editor"]
-            if clear_text:
-                st.session_state["tts_text_editor"] = ""
+        _, clear_col = st.columns([4, 1])
+        with clear_col:
+            if st.button("Clear Text", width="stretch"):
                 st.session_state["tts_text"] = ""
-
-        text = st.session_state["tts_text"]
+        text = st.text_area(
+            "Enter text",
+            placeholder="Type or paste your text here...",
+            height=220,
+            key="tts_text",
+            label_visibility="collapsed",
+        )
         char_count = len(text)
         word_count = len(text.split())
         est_seconds = _estimate_duration_seconds(text)
         st.caption(f"Characters: {char_count} | Words: {word_count} | Estimated duration: ~{est_seconds}s")
-        st.caption("Tip: while audio plays, edit text and click Apply Text only when you're ready.")
-
-    if st.session_state.get("generated_media"):
-        gm = st.session_state["generated_media"]
-        with st.container(border=True):
-            st.markdown('<p class="section-title">Now Playing</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="section-note">{gm["name"]}</p>', unsafe_allow_html=True)
-            _render_stateful_media(gm["data"], gm["mime"], gm["player_id"])
 
     # Keep controls visually grouped under Text Input (like the reference layout)
     if "engine_mode" not in locals():
@@ -702,13 +627,7 @@ with main_col:
                         st.error(f"Could not generate online voice: {exc}")
                     else:
                         output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
-                        st.session_state["generated_media"] = {
-                            "name": output_name,
-                            "mime": "audio/mpeg",
-                            "data": mp3_bytes,
-                            "player_id": "generated_audio_online",
-                        }
-                        _render_stateful_media(mp3_bytes, "audio/mpeg", "generated_audio_online")
+                        st.audio(BytesIO(mp3_bytes), format="audio/mp3")
                         st.download_button(
                             "Download MP3",
                             data=mp3_bytes,
@@ -748,13 +667,7 @@ with main_col:
                         output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
                         if language == "Hindi" and not selected_voice_id:
                             st.info("Hindi offline voice not found in installed system voices. Using default voice.")
-                        st.session_state["generated_media"] = {
-                            "name": output_name,
-                            "mime": "audio/wav",
-                            "data": wav_bytes,
-                            "player_id": "generated_audio_offline",
-                        }
-                        _render_stateful_media(wav_bytes, "audio/wav", "generated_audio_offline")
+                        st.audio(BytesIO(wav_bytes), format="audio/wav")
                         st.download_button(
                             "Download WAV",
                             data=wav_bytes,
