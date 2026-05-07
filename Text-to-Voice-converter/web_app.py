@@ -22,12 +22,18 @@ st.markdown(
     """
     <style>
     .stApp {
-        background:
-            radial-gradient(circle at 8% 4%, rgba(56, 189, 248, 0.34), rgba(56, 189, 248, 0) 34%),
-            radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.30), rgba(168, 85, 247, 0) 36%),
-            radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.24), rgba(16, 185, 129, 0) 44%),
-            linear-gradient(145deg, #040817 0%, #0c1b3a 46%, #161a48 100%);
-        color: #e2e8f0;
+        background: linear-gradient(
+            180deg,
+            #428892 0%,
+            #428892 34%,
+            #82a88e 34%,
+            #82a88e 55%,
+            #b4c08f 55%,
+            #b4c08f 73%,
+            #d0d8b6 73%,
+            #d0d8b6 100%
+        );
+        color: #1f2f2f;
     }
     .block-container {
         max-width: 1280px;
@@ -37,30 +43,30 @@ st.markdown(
         padding-right: 1.2rem;
     }
     .hero {
-        background: linear-gradient(120deg, rgba(59, 130, 246, 0.34), rgba(139, 92, 246, 0.30), rgba(16, 185, 129, 0.26));
-        border: 1px solid rgba(148, 163, 184, 0.34);
-        box-shadow: 0 16px 36px rgba(8, 15, 35, 0.45);
+        background: linear-gradient(120deg, rgba(66, 136, 146, 0.94), rgba(130, 168, 142, 0.88));
+        border: 1px solid rgba(49, 89, 95, 0.35);
+        box-shadow: 0 10px 24px rgba(45, 72, 76, 0.24);
         border-radius: 20px;
         padding: 20px 22px;
         margin: 60px 0px 10px 0px;
     }
     .hero h1 {
         margin: 0;
-        color: #f8fafc;
+        color: #f4f6ec;
         font-size: 2.1rem;
         font-weight: 700;
     }
     .hero p {
         margin: 7px 0 0 0;
-        color: #e2e8f0;
+        color: #eff4e2;
         font-size: 1rem;
         line-height: 1.45;
     }
     .glass-card {
-        background: rgba(15, 23, 42, 0.60);
-        border: 1px solid rgba(148, 163, 184, 0.33);
+        background: rgba(240, 244, 229, 0.62);
+        border: 1px solid rgba(80, 116, 103, 0.34);
         border-radius: 18px;
-        box-shadow: 0 12px 28px rgba(2, 6, 23, 0.42);
+        box-shadow: 0 8px 20px rgba(56, 84, 79, 0.18);
         padding: 10px 16px 12px 16px;
         margin-bottom: 10px;
     }
@@ -71,24 +77,24 @@ st.markdown(
         border-radius: 999px;
         padding: 6px 11px;
         font-size: 0.82rem;
-        border: 1px solid rgba(148, 163, 184, 0.38);
-        background: rgba(30, 41, 59, 0.85);
-        color: #cbd5e1;
+        border: 1px solid rgba(70, 114, 106, 0.34);
+        background: rgba(208, 216, 182, 0.85);
+        color: #244042;
     }
     .section-title {
-        color: #f8fafc;
+        color: #244042;
         font-size: 1.12rem;
         font-weight: 700;
         margin: 0 0 2px 0;
     }
     .section-note {
-        color: #94a3b8;
+        color: #425d58;
         font-size: 0.92rem;
         margin: 0 0 8px 0;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(15, 23, 42, 0.48);
-        border: 1px solid rgba(148, 163, 184, 0.28) !important;
+        background: rgba(244, 247, 233, 0.55);
+        border: 1px solid rgba(98, 137, 122, 0.32) !important;
         border-radius: 16px !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
@@ -96,39 +102,39 @@ st.markdown(
         padding-bottom: 0.55rem;
     }
     div[data-testid="stTextArea"] textarea {
-        background: #0f172a !important;
-        color: #f8fafc !important;
-        border: 1px solid #334155 !important;
+        background: #f3f6ea !important;
+        color: #203438 !important;
+        border: 1px solid #6d9b89 !important;
         border-radius: 12px !important;
     }
     div[data-testid="stTextArea"] textarea:focus {
-        border: 1px solid #6366f1 !important;
-        box-shadow: 0 0 0 1px #6366f1 !important;
+        border: 1px solid #428892 !important;
+        box-shadow: 0 0 0 1px #428892 !important;
     }
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stRadio"] > div,
     div[data-testid="stSlider"] > div {
-        color: #e2e8f0 !important;
+        color: #1f3538 !important;
     }
     div[data-testid="stButton"] button, div[data-testid="baseButton-secondary"] {
         border-radius: 12px !important;
-        border: 1px solid rgba(99, 102, 241, 0.45) !important;
-        background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
-        color: #ffffff !important;
+        border: 1px solid rgba(58, 110, 108, 0.48) !important;
+        background: linear-gradient(135deg, #428892, #6f9f8e) !important;
+        color: #f5f8ec !important;
         font-weight: 600 !important;
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35) !important;
+        box-shadow: 0 8px 18px rgba(66, 136, 146, 0.22) !important;
     }
     div[data-testid="stDownloadButton"] button {
         border-radius: 12px !important;
-        border: 1px solid rgba(16, 185, 129, 0.50) !important;
-        background: linear-gradient(135deg, #10b981, #059669) !important;
-        color: #ffffff !important;
+        border: 1px solid rgba(77, 115, 95, 0.50) !important;
+        background: linear-gradient(135deg, #82a88e, #6f9f8e) !important;
+        color: #f5f8ec !important;
         font-weight: 600 !important;
     }
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: #94a3b8;
+        color: #3f5955;
         font-size: 0.85rem;
         letter-spacing: 0.01em;
     }
@@ -285,6 +291,8 @@ def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
 
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
+if "online_voice_selection" not in st.session_state:
+    st.session_state["online_voice_selection"] = "en-IN-NeerjaNeural"
 
 voice_preview_lines = {
     "English": "Hello, this is AwaazCraft voice preview.\nYour selected voice is clear and natural.",
@@ -351,10 +359,13 @@ if engine_mode == "Online (Neerja/Neural)":
         with controls_col1:
             language = st.selectbox("Language", list(voice_options_by_language.keys()), index=0)
             voices_list = voice_options_by_language[language]
+            if st.session_state["online_voice_selection"] not in voices_list:
+                st.session_state["online_voice_selection"] = voices_list[0]
             voice = st.selectbox(
                 "Online Voice",
                 voices_list,
-                index=0,
+                index=voices_list.index(st.session_state["online_voice_selection"]),
+                key="online_voice_selection",
                 format_func=lambda vid: f"🔊  {vid}",
             )
             st.caption("Tap a 🔊 below to preview that voice.")
@@ -367,13 +378,16 @@ if engine_mode == "Online (Neerja/Neural)":
                         help=f"Preview {vid}",
                         width="stretch",
                     ):
-                        preview_voice = vid
+                        st.session_state["online_voice_selection"] = vid
+                        st.session_state["preview_voice_clicked"] = vid
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
             pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
             online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
             generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
+
+        preview_voice = st.session_state.pop("preview_voice_clicked", None)
 
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
