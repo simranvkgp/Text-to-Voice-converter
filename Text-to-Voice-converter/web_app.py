@@ -209,12 +209,55 @@ st.markdown(
         transform: translateY(-1px);
         box-shadow: 0 10px 20px rgba(108, 132, 106, 0.24);
     }
+    .side-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .side-panel-title {
+        margin: 0;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--text-main);
+        font-size: 1.02rem;
+    }
+    .side-panel-sub {
+        margin: 2px 0 0 0;
+        color: var(--text-muted);
+        font-size: 0.86rem;
+    }
+    .side-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(78, 123, 113, 0.22);
+        background: rgba(247, 250, 239, 0.9);
+        color: var(--text-main);
+        font-weight: 600;
+        font-size: 0.84rem;
+    }
+    .side-divider {
+        height: 1px;
+        background: rgba(73, 118, 109, 0.18);
+        margin: 10px 0;
+        border-radius: 99px;
+    }
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: #2f5052;
+        color: rgba(245, 249, 238, 0.95);
         font-size: 0.85rem;
         letter-spacing: 0.01em;
+        background: linear-gradient(135deg, rgba(16, 36, 38, 0.75), rgba(31, 61, 63, 0.7));
+        border: 1px solid rgba(66, 136, 146, 0.28);
+        padding: 10px 14px;
+        border-radius: 14px;
+        box-shadow: 0 10px 22px rgba(20, 40, 40, 0.18);
     }
     @media (max-width: 900px) {
         .block-container {
@@ -369,21 +412,62 @@ def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
 
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
+if "show_side_panel" not in st.session_state:
+    st.session_state["show_side_panel"] = True
 
 
+panel_ratio = [0.34, 0.66] if st.session_state["show_side_panel"] else [0.08, 0.92]
+side_col, main_col = st.columns(panel_ratio, gap="medium")
 
-top_left, top_right = st.columns([1, 2], gap="medium")
-with top_left:
-    with st.container(border=True):
-        st.markdown('<p class="section-title">Voice Engine</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-note">Select a generation mode for your output audio.</p>', unsafe_allow_html=True)
-        engine_mode = st.radio(
-            "Voice engine",
-            ["Online (Neerja/Neural)", "Offline (System voice)"],
-            index=0,
-            label_visibility="collapsed",
-        )
-with top_right:
+with side_col:
+    if st.session_state["show_side_panel"]:
+        with st.container(border=True):
+            h1, h2 = st.columns([3, 1])
+            with h1:
+                st.markdown(
+                    """
+                    <div class="side-panel-header">
+                      <div>
+                        <p class="side-panel-title">Controls</p>
+                        <p class="side-panel-sub">Voice Engine + Quick Options</p>
+                      </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with h2:
+                if st.button("Hide", width="stretch"):
+                    st.session_state["show_side_panel"] = False
+
+            st.markdown('<p class="section-title">Voice Engine</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-note">Select a generation mode for your output audio.</p>', unsafe_allow_html=True)
+            engine_mode = st.radio(
+                "Voice engine",
+                ["Online (Neerja/Neural)", "Offline (System voice)"],
+                index=0,
+                label_visibility="collapsed",
+            )
+
+            st.markdown('<div class="side-divider"></div>', unsafe_allow_html=True)
+
+            st.markdown('<p class="section-title">Quick Options</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-note">Small tweaks to shape your output.</p>', unsafe_allow_html=True)
+            tone_mode = st.selectbox("Tone", ["Balanced", "Professional", "Warm"], index=0)
+            delivery_mode = st.selectbox("Delivery", ["Natural", "Narration", "Expressive"], index=0)
+            pacing_mode = st.selectbox("Pacing", ["Standard", "Slightly Slow", "Slightly Fast"], index=0)
+            output_focus = st.selectbox("Focus", ["Clarity", "Smoothness", "Energy"], index=0)
+
+            st.markdown(
+                f"""
+                <div class="side-chip">Selected: {tone_mode} • {delivery_mode} • {pacing_mode} • {output_focus}</div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        if st.button("☰", help="Show Voice Engine + Quick Options", width="stretch"):
+            st.session_state["show_side_panel"] = True
+
+with main_col:
     with st.container(border=True):
         st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
@@ -403,21 +487,8 @@ with top_right:
         est_seconds = _estimate_duration_seconds(text)
         st.caption(f"Characters: {char_count} | Words: {word_count} | Estimated duration: ~{est_seconds}s")
 
-with st.container(border=True):
-    st.markdown('<p class="section-title">Quick Options</p>', unsafe_allow_html=True)
-    st.markdown('<p class="section-note">Adjust style preferences in a compact horizontal layout.</p>', unsafe_allow_html=True)
-    opt_col1, opt_col2, opt_col3, opt_col4 = st.columns(4, gap="small")
-    with opt_col1:
-        tone_mode = st.selectbox("Tone", ["Balanced", "Professional", "Warm"], index=0)
-    with opt_col2:
-        delivery_mode = st.selectbox("Delivery", ["Natural", "Narration", "Expressive"], index=0)
-    with opt_col3:
-        pacing_mode = st.selectbox("Pacing", ["Standard", "Slightly Slow", "Slightly Fast"], index=0)
-    with opt_col4:
-        output_focus = st.selectbox("Focus", ["Clarity", "Smoothness", "Energy"], index=0)
-    st.caption(
-        f"Selected: {tone_mode} tone • {delivery_mode} delivery • {pacing_mode} pacing • {output_focus} focus"
-    )
+if "engine_mode" not in locals():
+    engine_mode = "Online (Neerja/Neural)"
 
 if engine_mode == "Online (Neerja/Neural)":
     with st.container(border=True):
