@@ -556,10 +556,12 @@ with main_col:
     with st.container(border=True):
         st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
-        _, clear_col = st.columns([4, 1])
+        _, clear_col, generate_col = st.columns([3, 1, 1])
         with clear_col:
             if st.button("Clear Text", width="stretch"):
                 st.session_state["tts_text"] = ""
+        with generate_col:
+            generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
         text = st.text_area(
             "Enter text",
             placeholder="Type or paste your text here...",
@@ -606,7 +608,6 @@ with main_col:
                 vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
                 pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
                 online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
-                generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
 
         if edge_tts is None:
             st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
@@ -653,7 +654,7 @@ with main_col:
 
         if pyttsx3 is None:
             st.error("`pyttsx3` is not installed. Run: `py -m pip install pyttsx3`")
-        elif st.button("Generate Voice", type="primary", width="stretch"):
+        elif generate_clicked:
             if not text.strip():
                 st.warning("Please enter some text first.")
             else:
