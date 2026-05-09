@@ -553,67 +553,96 @@ with side_col:
             st.session_state["show_side_panel"] = True
 
 with main_col:
-    with st.container(border=True):
-        st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
-        _, clear_col, generate_col = st.columns([3, 1, 1])
-        with clear_col:
-            if st.button("Clear Text", width="stretch"):
-                st.session_state["tts_text"] = ""
-        with generate_col:
-            generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
-        text = st.text_area(
-            "Enter text",
-            placeholder="Type or paste your text here...",
-            height=220,
-            key="tts_text",
-            label_visibility="collapsed",
-        )
-        char_count = len(text)
-        word_count = len(text.split())
-        est_seconds = _estimate_duration_seconds(text)
-        st.caption(f"Characters: {char_count} | Words: {word_count} | Estimated duration: ~{est_seconds}s")
+    if "generated_audio_bytes" not in st.session_state:
+        st.session_state["generated_audio_bytes"] = None
+        st.session_state["generated_audio_format"] = None
+        st.session_state["generated_output_name"] = None
+        st.session_state["generated_mime"] = None
+        st.session_state["generated_download_label"] = None
 
-    # Keep controls visually grouped under Text Input (like the reference layout)
     if "engine_mode" not in locals():
         engine_mode = "Online (Neerja/Neural)"
 
-    if engine_mode == "Online (Neerja/Neural)":
-        with st.container(border=True):
-            st.markdown('<p class="section-title">Online Neural Controls</p>', unsafe_allow_html=True)
-            st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
-            controls_col1, controls_col2 = st.columns(2)
-            voice_options_by_language = {
-                "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
-                "Hindi": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
-                "Bengali": ["bn-IN-BashkarNeural", "bn-IN-TanishaaNeural"],
-                "Gujarati": ["gu-IN-DhwaniNeural", "gu-IN-NiranjanNeural"],
-                "Kannada": ["kn-IN-GaganNeural", "kn-IN-SapnaNeural"],
-                "Malayalam": ["ml-IN-MidhunNeural", "ml-IN-SobhanaNeural"],
-                "Marathi": ["mr-IN-AarohiNeural", "mr-IN-ManoharNeural"],
-                "Punjabi": ["pa-IN-OjasNeural", "pa-IN-VaaniNeural"],
-                "Tamil": ["ta-IN-PallaviNeural", "ta-IN-ValluvarNeural"],
-                "Telugu": ["te-IN-MohanNeural", "te-IN-ShrutiNeural"],
-            }
-            with controls_col1:
-                language = st.selectbox("Language", list(voice_options_by_language.keys()), index=0)
-                voices_list = voice_options_by_language[language]
-                voice = st.selectbox(
-                    "Online Voice",
-                    voices_list,
-                    index=0,
-                )
-                speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
-            with controls_col2:
-                vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
-                pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
-                online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
+    content_col, controls_panel_col = st.columns([0.70, 0.30], gap="medium")
 
-        if edge_tts is None:
-            st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
-        elif generate_clicked:
-            if not text.strip():
-                st.warning("Please enter some text first.")
+    with content_col:
+        with st.container(border=True):
+            st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
+            _, clear_col, generate_col = st.columns([3, 1, 1])
+            with clear_col:
+                if st.button("Clear Text", width="stretch"):
+                    st.session_state["tts_text"] = ""
+                    st.session_state["generated_audio_bytes"] = None
+            with generate_col:
+                generate_clicked = st.button("Generate Voice", type="primary", width="stretch")
+            text = st.text_area(
+                "Enter text",
+                placeholder="Type or paste your text here...",
+                height=220,
+                key="tts_text",
+                label_visibility="collapsed",
+            )
+            char_count = len(text)
+            word_count = len(text.split())
+            est_seconds = _estimate_duration_seconds(text)
+            st.caption(f"Characters: {char_count} | Words: {word_count} | Estimated duration: ~{est_seconds}s")
+
+            if st.session_state["generated_audio_bytes"]:
+                st.audio(BytesIO(st.session_state["generated_audio_bytes"]), format=st.session_state["generated_audio_format"])
+                st.download_button(
+                    st.session_state["generated_download_label"],
+                    data=st.session_state["generated_audio_bytes"],
+                    file_name=st.session_state["generated_output_name"],
+                    mime=st.session_state["generated_mime"],
+                    width="stretch",
+                )
+
+    with controls_panel_col:
+        if engine_mode == "Online (Neerja/Neural)":
+            with st.container(border=True):
+                st.markdown('<p class="section-title">Online Neural Controls</p>', unsafe_allow_html=True)
+                st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
+                controls_col1, controls_col2 = st.columns(2)
+                voice_options_by_language = {
+                    "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
+                    "Hindi": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
+                    "Bengali": ["bn-IN-BashkarNeural", "bn-IN-TanishaaNeural"],
+                    "Gujarati": ["gu-IN-DhwaniNeural", "gu-IN-NiranjanNeural"],
+                    "Kannada": ["kn-IN-GaganNeural", "kn-IN-SapnaNeural"],
+                    "Malayalam": ["ml-IN-MidhunNeural", "ml-IN-SobhanaNeural"],
+                    "Marathi": ["mr-IN-AarohiNeural", "mr-IN-ManoharNeural"],
+                    "Punjabi": ["pa-IN-OjasNeural", "pa-IN-VaaniNeural"],
+                    "Tamil": ["ta-IN-PallaviNeural", "ta-IN-ValluvarNeural"],
+                    "Telugu": ["te-IN-MohanNeural", "te-IN-ShrutiNeural"],
+                }
+                with controls_col1:
+                    language = st.selectbox("Language", list(voice_options_by_language.keys()), index=0)
+                    voices_list = voice_options_by_language[language]
+                    voice = st.selectbox("Online Voice", voices_list, index=0)
+                    speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
+                with controls_col2:
+                    vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
+                    pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
+                    online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
+        else:
+            with st.container(border=True):
+                st.markdown('<p class="section-title">Offline Voice Controls</p>', unsafe_allow_html=True)
+                st.markdown('<p class="section-note">Works offline using installed Windows voices.</p>', unsafe_allow_html=True)
+                controls_col1, controls_col2 = st.columns(2)
+                with controls_col1:
+                    language = st.selectbox("Language", ["English", "Hindi"], index=0)
+                    speed_label = st.selectbox("Speed", ["Slow", "Normal", "Fast"], index=1)
+                with controls_col2:
+                    volume_pct = st.slider("Volume", min_value=0, max_value=100, value=100)
+                    offline_file_stem = st.text_input("File name", value="textvoice_output")
+
+    if generate_clicked:
+        if not text.strip():
+            st.warning("Please enter some text first.")
+        elif engine_mode == "Online (Neerja/Neural)":
+            if edge_tts is None:
+                st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
             else:
                 with st.spinner("Generating online neural voice..."):
                     try:
@@ -627,37 +656,19 @@ with main_col:
                     except Exception as exc:
                         st.error(f"Could not generate online voice: {exc}")
                     else:
-                        output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
-                        st.audio(BytesIO(mp3_bytes), format="audio/mp3")
-                        st.download_button(
-                            "Download MP3",
-                            data=mp3_bytes,
-                            file_name=output_name,
-                            mime="audio/mpeg",
-                            width="stretch",
-                        )
-    else:
-        with st.container(border=True):
-            st.markdown('<p class="section-title">Offline Voice Controls</p>', unsafe_allow_html=True)
-            st.markdown('<p class="section-note">Works offline using installed Windows voices.</p>', unsafe_allow_html=True)
-            controls_col1, controls_col2 = st.columns(2)
-            with controls_col1:
-                language = st.selectbox("Language", ["English", "Hindi"], index=0)
-                speed_label = st.selectbox("Speed", ["Slow", "Normal", "Fast"], index=1)
-            with controls_col2:
-                volume_pct = st.slider("Volume", min_value=0, max_value=100, value=100)
-                offline_file_stem = st.text_input("File name", value="textvoice_output")
-
-        speed_map = {"Slow": 120, "Normal": 175, "Fast": 240}
-        rate = speed_map[speed_label]
-        volume = volume_pct / 100.0
-
-        if pyttsx3 is None:
-            st.error("`pyttsx3` is not installed. Run: `py -m pip install pyttsx3`")
-        elif generate_clicked:
-            if not text.strip():
-                st.warning("Please enter some text first.")
+                        st.session_state["generated_audio_bytes"] = mp3_bytes
+                        st.session_state["generated_audio_format"] = "audio/mp3"
+                        st.session_state["generated_output_name"] = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
+                        st.session_state["generated_mime"] = "audio/mpeg"
+                        st.session_state["generated_download_label"] = "Download MP3"
+                        st.rerun()
+        else:
+            if pyttsx3 is None:
+                st.error("`pyttsx3` is not installed. Run: `py -m pip install pyttsx3`")
             else:
+                speed_map = {"Slow": 120, "Normal": 175, "Fast": 240}
+                rate = speed_map[speed_label]
+                volume = volume_pct / 100.0
                 with st.spinner("Generating offline voice..."):
                     try:
                         selected_voice_id = _pick_offline_voice(language)
@@ -665,16 +676,13 @@ with main_col:
                     except Exception as exc:
                         st.error(f"Could not generate speech: {exc}")
                     else:
-                        output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
                         if language == "Hindi" and not selected_voice_id:
                             st.info("Hindi offline voice not found in installed system voices. Using default voice.")
-                        st.audio(BytesIO(wav_bytes), format="audio/wav")
-                        st.download_button(
-                            "Download WAV",
-                            data=wav_bytes,
-                            file_name=output_name,
-                            mime="audio/wav",
-                            width="stretch",
-                        )
+                        st.session_state["generated_audio_bytes"] = wav_bytes
+                        st.session_state["generated_audio_format"] = "audio/wav"
+                        st.session_state["generated_output_name"] = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
+                        st.session_state["generated_mime"] = "audio/wav"
+                        st.session_state["generated_download_label"] = "Download WAV"
+                        st.rerun()
 
 st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur</p>', unsafe_allow_html=True)
