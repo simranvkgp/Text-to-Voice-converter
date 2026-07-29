@@ -750,15 +750,20 @@ def _generate_ambience_preview(background_name: str, duration_ms: int = 6000) ->
     return buffer.getvalue()
 
 
-# "Singing" here is a lightweight sing-song effect built on top of the regular TTS
-# voice (per-line pitch shifting + rhythmic pauses) — not a trained singing-voice
+# "Singing" here is a lightweight sing-song effect built on top of the SAME regular
+# TTS voice (per-line pitch variation + rhythmic pauses) — not a trained singing-voice
 # model. Real singing synthesis (DiffSinger/VISinger-style) needs GPU inference and
-# large model weights that won't run on this hosting tier.
+# large model weights that won't run on this hosting tier. Semitone ranges are kept
+# small on purpose: large post-hoc pitch shifts distort formants enough that the same
+# voice starts to sound like a different speaker line-to-line.
 MELODY_STYLES = {
-    "Gentle Lullaby": {"semitones": [0, 2, 4, 2, 0, -2], "gap_ms": 260, "pace_delta": -20},
-    "Playful Bounce": {"semitones": [0, 4, 7, 4, 0, 4, 7, 9], "gap_ms": 140, "pace_delta": 10},
-    "Devotional Chant": {"semitones": [0, 0, 3, 0, -2, 0], "gap_ms": 320, "pace_delta": -30},
+    "Gentle Lullaby": {"semitones": [0, 1, 2, 1, 0, -1], "gap_ms": 260, "pace_delta": -20},
+    "Playful Bounce": {"semitones": [0, 2, 3, 2, 0, 2, 3, 4], "gap_ms": 140, "pace_delta": 10},
+    "Devotional Chant": {"semitones": [0, 0, 2, 0, -1, 0], "gap_ms": 320, "pace_delta": -30},
 }
+
+# Rough Hz-per-semitone step for edge-tts's native pitch parameter at typical voice registers.
+EDGE_TTS_HZ_PER_SEMITONE = 9
 
 
 def _split_poem_lines(text: str) -> list[str]:
@@ -774,17 +779,30 @@ def _pitch_shift_segment(segment: "AudioSegment", semitones: float) -> "AudioSeg
     return shifted.set_frame_rate(segment.frame_rate)
 
 
-def _synthesize_sung_poem(lines: list[str], melody_name: str, export_format: str, synth_line_fn) -> bytes:
-    """Render each line through `synth_line_fn`, pitch-shift it per the melody pattern, and stitch with pauses."""
+def _synthesize_sung_poem(
+    lines: list[str],
+    melody_name: str,
+    export_format: str,
+    synth_line_fn,
+    apply_pitch_shift: bool = True,
+) -> bytes:
+    """Render each line through `synth_line_fn(line, index)` and stitch with rhythmic pauses.
+
+    `synth_line_fn` gets the line index so callers that can control pitch natively
+    (e.g. edge-tts's own pitch parameter) can vary it per melody note themselves —
+    that keeps a single consistent voice instead of the naive post-hoc pitch shift
+    below, which is only applied when the engine has no native pitch control.
+    """
     style = MELODY_STYLES[melody_name]
     semitone_pattern = style["semitones"]
     gap = AudioSegment.silent(duration=style["gap_ms"])
 
     combined = AudioSegment.silent(duration=0)
     for i, line in enumerate(lines):
-        line_bytes = synth_line_fn(line)
+        line_bytes = synth_line_fn(line, i)
         segment = AudioSegment.from_file(BytesIO(line_bytes), format=export_format)
-        segment = _pitch_shift_segment(segment, semitone_pattern[i % len(semitone_pattern)])
+        if apply_pitch_shift:
+            segment = _pitch_shift_segment(segment, semitone_pattern[i % len(semitone_pattern)])
         combined += segment + gap
 
     buffer = BytesIO()
@@ -966,13 +984,19 @@ if engine_mode == "Online (Neerja/Neural)":
                         if not lines:
                             raise ValueError("No text lines found to sing.")
                         pace = max(-50, min(80, speed_pct + MELODY_STYLES[melody_choice]["pace_delta"]))
+                        semitone_pattern = MELODY_STYLES[melody_choice]["semitones"]
+
+                        def _sing_line_online(line_text: str, index: int) -> bytes:
+                            semitone = semitone_pattern[index % len(semitone_pattern)]
+                            line_pitch_hz = max(-50, min(50, pitch_hz + round(semitone * EDGE_TTS_HZ_PER_SEMITONE)))
+                            return _edge_tts_to_mp3_bytes(
+                                text=line_text, voice=voice, rate_pct=pace, volume_pct=vol_pct, pitch_hz=line_pitch_hz,
+                            )
+
+                        # Vary edge-tts's own pitch parameter per line (same voice model,
+                        # no post-hoc resample) instead of pydub pitch-shifting afterward.
                         mp3_bytes = _synthesize_sung_poem(
-                            lines,
-                            melody_choice,
-                            "mp3",
-                            lambda line: _edge_tts_to_mp3_bytes(
-                                text=line, voice=voice, rate_pct=pace, volume_pct=vol_pct, pitch_hz=pitch_hz,
-                            ),
+                            lines, melody_choice, "mp3", _sing_line_online, apply_pitch_shift=False,
                         )
                     else:
                         mp3_bytes = _edge_tts_to_mp3_bytes(
@@ -1029,7 +1053,7 @@ else:
                             lines,
                             melody_choice,
                             "wav",
-                            lambda line: _tts_to_wav_bytes(line, rate=sung_rate, volume=volume, voice_id=selected_voice_id),
+                            lambda line, index: _tts_to_wav_bytes(line, rate=sung_rate, volume=volume, voice_id=selected_voice_id),
                         )
                     else:
                         wav_bytes = _tts_to_wav_bytes(text, rate=rate, volume=volume, voice_id=selected_voice_id)
