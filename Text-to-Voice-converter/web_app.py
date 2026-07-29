@@ -27,44 +27,48 @@ st.html(
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
     <style>
     /* ============================================================
-       DESIGN TOKENS — one primary accent (teal), one secondary
-       accent (amber, reserved for download/success), and a
-       graduated neutral scale for text/surfaces. Replaces the old
-       4-color teal/sage/olive/cream mix that competed visually.
+       DESIGN TOKENS — bold gradient palette: violet primary, pink
+       secondary, amber accent (download/success), graduated neutral
+       scale for text/surfaces.
        ============================================================ */
     :root {
-        --primary: #2f7d78;
-        --primary-light: #4fa39d;
-        --primary-dark: #235e5a;
-        --primary-soft: rgba(47, 125, 120, 0.10);
+        --primary: #7c3aed;
+        --primary-light: #a78bfa;
+        --primary-dark: #5b21b6;
+        --primary-soft: rgba(124, 58, 237, 0.10);
 
-        --accent: #c98a3e;
-        --accent-light: #dba55f;
-        --accent-soft: rgba(201, 138, 62, 0.12);
+        --secondary: #ec4899;
+        --secondary-light: #f472b6;
+        --secondary-dark: #be185d;
 
-        --surface: #fdfcf7;
-        --surface-card: rgba(255, 255, 255, 0.86);
-        --surface-card-strong: rgba(255, 255, 255, 0.97);
+        --accent: #f59e0b;
+        --accent-light: #fbbf24;
+        --accent-soft: rgba(245, 158, 11, 0.12);
 
-        --ink-900: #16302e;
-        --ink-700: #2c4341;
-        --ink-500: #5b716f;
-        --ink-400: #7c908e;
+        --surface: #faf9ff;
+        --surface-card: rgba(255, 255, 255, 0.90);
+        --surface-card-strong: rgba(255, 255, 255, 0.98);
 
-        --line: rgba(47, 125, 120, 0.18);
-        --line-strong: rgba(47, 125, 120, 0.30);
+        --ink-900: #211a3d;
+        --ink-700: #3c3260;
+        --ink-500: #6c6390;
+        --ink-400: #948bb3;
 
-        --shadow-soft: 0 10px 28px rgba(22, 48, 46, 0.10);
-        --shadow-lift: 0 14px 32px rgba(22, 48, 46, 0.16);
+        --line: rgba(124, 58, 237, 0.16);
+        --line-strong: rgba(124, 58, 237, 0.30);
+
+        --shadow-soft: 0 10px 28px rgba(76, 29, 149, 0.10);
+        --shadow-lift: 0 16px 36px rgba(76, 29, 149, 0.20);
         --radius-lg: 20px;
         --radius-md: 16px;
         --radius-sm: 12px;
     }
     .stApp {
         background:
-            radial-gradient(circle at 10% 6%, rgba(47, 125, 120, 0.10), transparent 36%),
-            radial-gradient(circle at 90% 10%, rgba(201, 138, 62, 0.08), transparent 34%),
-            linear-gradient(160deg, #f7f9f2 0%, var(--surface) 50%, #f3f6ee 100%);
+            radial-gradient(circle at 8% 8%, rgba(124, 58, 237, 0.16), transparent 38%),
+            radial-gradient(circle at 92% 6%, rgba(236, 72, 153, 0.14), transparent 36%),
+            radial-gradient(circle at 50% 100%, rgba(6, 182, 212, 0.12), transparent 42%),
+            linear-gradient(160deg, #fbfaff 0%, var(--surface) 50%, #f7f5ff 100%);
         color: var(--ink-900);
         font-family: 'Inter', sans-serif;
     }
@@ -90,9 +94,9 @@ st.html(
         font-weight: 600 !important;
     }
     .hero {
-        background: linear-gradient(120deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%);
+        background: linear-gradient(120deg, var(--primary-dark) 0%, var(--primary) 42%, var(--secondary) 75%, var(--accent) 100%);
         border: 1px solid var(--line-strong);
-        box-shadow: var(--shadow-lift);
+        box-shadow: 0 18px 40px rgba(124, 58, 237, 0.28);
         border-radius: var(--radius-lg);
         padding: 24px 26px;
         margin: 60px 0px 12px 0px;
@@ -103,7 +107,9 @@ st.html(
         content: "";
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at 88% 15%, rgba(255,255,255,0.16), transparent 45%);
+        background:
+            radial-gradient(circle at 14% 92%, rgba(255,255,255,0.20), transparent 40%),
+            radial-gradient(circle at 88% 15%, rgba(255,255,255,0.22), transparent 45%);
         pointer-events: none;
     }
     .hero h1 {
@@ -114,10 +120,11 @@ st.html(
         font-weight: 700;
         letter-spacing: -0.01em;
         position: relative;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.15);
     }
     .hero p {
         margin: 7px 0 0 0;
-        color: rgba(255, 255, 255, 0.88);
+        color: rgba(255, 255, 255, 0.92);
         font-size: 1rem;
         line-height: 1.45;
         position: relative;
@@ -141,15 +148,16 @@ st.html(
         margin-right: 8px;
         margin-top: 4px;
         border-radius: 999px;
-        padding: 6px 11px;
+        padding: 6px 13px;
         font-size: 0.82rem;
-        border: 1px solid var(--line-strong);
-        background: var(--primary-soft);
-        color: var(--primary-dark);
-        font-weight: 600;
+        border: none;
+        background: linear-gradient(120deg, var(--primary), var(--secondary));
+        color: #ffffff;
+        font-weight: 700;
+        box-shadow: 0 6px 16px rgba(124, 58, 237, 0.22);
     }
     .section-title {
-        color: var(--ink-900);
+        color: var(--primary-dark);
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 1.12rem;
         font-weight: 700;
@@ -210,7 +218,7 @@ st.html(
         background: #ffffff !important;
         border-radius: var(--radius-sm) !important;
         border: 1px solid var(--line-strong) !important;
-        box-shadow: 0 6px 14px rgba(22, 48, 46, 0.06);
+        box-shadow: 0 6px 14px rgba(76, 29, 149, 0.06);
     }
     div[data-baseweb="select"] > div:hover {
         border: 1px solid var(--primary) !important;
@@ -254,29 +262,29 @@ st.html(
     div[data-testid="stButton"] button[kind="primary"],
     div[data-testid="baseButton-primary"] {
         border-radius: var(--radius-sm) !important;
-        border: 1px solid var(--primary-dark) !important;
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+        border: none !important;
+        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        box-shadow: 0 10px 22px rgba(47, 125, 120, 0.30) !important;
+        box-shadow: 0 12px 26px rgba(124, 58, 237, 0.34) !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        background: linear-gradient(135deg, var(--primary-light), var(--primary)) !important;
-        box-shadow: 0 12px 26px rgba(47, 125, 120, 0.38) !important;
+        background: linear-gradient(135deg, var(--secondary), var(--accent)) !important;
+        box-shadow: 0 14px 30px rgba(236, 72, 153, 0.36) !important;
         transform: translateY(-1px);
     }
     div[data-testid="stDownloadButton"] button {
         border-radius: var(--radius-sm) !important;
-        border: 1px solid var(--accent) !important;
-        background: linear-gradient(135deg, var(--accent), #b3762e) !important;
+        border: none !important;
+        background: linear-gradient(135deg, var(--accent), var(--secondary)) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        box-shadow: 0 10px 22px rgba(201, 138, 62, 0.30) !important;
+        box-shadow: 0 12px 26px rgba(245, 158, 11, 0.32) !important;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     div[data-testid="stDownloadButton"] button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 12px 26px rgba(201, 138, 62, 0.38) !important;
+        box-shadow: 0 14px 30px rgba(236, 72, 153, 0.38) !important;
     }
     div[data-testid="stAlert"] {
         border-radius: var(--radius-sm) !important;
@@ -321,12 +329,12 @@ st.html(
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 7px 10px;
+        padding: 7px 12px;
         border-radius: 999px;
-        border: 1px solid var(--line-strong);
-        background: var(--primary-soft);
+        border: none;
+        background: linear-gradient(120deg, var(--primary-soft), var(--accent-soft));
         color: var(--primary-dark);
-        font-weight: 600;
+        font-weight: 700;
         font-size: 0.84rem;
     }
     .side-divider {
@@ -334,73 +342,6 @@ st.html(
         background: var(--line);
         margin: 10px 0;
         border-radius: 99px;
-    }
-    .nav-strip {
-        background: linear-gradient(180deg, var(--ink-900), var(--primary-dark));
-        border: 1px solid var(--line-strong);
-        border-radius: var(--radius-md);
-        padding: 10px 10px;
-        box-shadow: var(--shadow-lift);
-        position: sticky;
-        top: 12px;
-    }
-    .nav-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 10px 12px 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-        margin-bottom: 10px;
-    }
-    .nav-logo {
-        width: 34px;
-        height: 34px;
-        border-radius: var(--radius-sm);
-        background: linear-gradient(135deg, var(--primary-light), var(--accent));
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        font-weight: 800;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .nav-name {
-        color: #ffffff;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: 700;
-        font-size: 0.98rem;
-        margin: 0;
-        line-height: 1.1;
-    }
-    .nav-sub {
-        color: rgba(255, 255, 255, 0.72);
-        font-size: 0.78rem;
-        margin: 2px 0 0 0;
-    }
-    .nav-item {
-        padding: 10px 10px;
-        border-radius: var(--radius-sm);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.06);
-        color: rgba(255, 255, 255, 0.92);
-        font-weight: 650;
-        font-size: 0.86rem;
-        margin-bottom: 8px;
-        transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
-    }
-    .nav-item:hover {
-        transform: translateY(-1px);
-        background: rgba(255, 255, 255, 0.10);
-        border-color: rgba(255, 255, 255, 0.22);
-    }
-    .nav-item-active {
-        background: linear-gradient(135deg, var(--primary-light), var(--accent));
-        border-color: var(--accent-light);
-    }
-    .nav-mini {
-        color: rgba(255, 255, 255, 0.62);
-        font-size: 0.76rem;
-        padding: 6px 10px 2px 10px;
     }
     .app-footer {
         margin-top: 1rem;
@@ -472,9 +413,9 @@ st.html(
       <p>Turn text into clear, natural speech with premium Indian neural voices.</p>
     </div>
     <div class="glass-card">
-      <span class="stat-chip">Fast generation</span>
-      <span class="stat-chip">Online + Offline modes</span>
-      <span class="stat-chip">One-click download</span>
+      <span class="stat-chip">⚡ Fast generation</span>
+      <span class="stat-chip">🌐 Online + Offline modes</span>
+      <span class="stat-chip">⬇️ One-click download</span>
     </div>
     """
     )
@@ -574,7 +515,7 @@ if "show_side_panel" not in st.session_state:
 
 
 layout_ratio = [0.22, 0.58, 0.20] if st.session_state["show_side_panel"] else [0.06, 0.66, 0.28]
-left_strip_col, main_col, right_strip_col = st.columns(layout_ratio, gap="medium")
+left_strip_col, main_col, right_strip_col = st.columns(layout_ratio, gap="large")
 
 with left_strip_col:
     if st.session_state["show_side_panel"]:
@@ -586,7 +527,7 @@ with left_strip_col:
                         """
                     <div class="side-panel-header">
                       <div>
-                        <p class="side-panel-title">Controls</p>
+                        <p class="side-panel-title">🎛️ Controls</p>
                         <p class="side-panel-sub">Voice Engine + Quick Options</p>
                       </div>
                     </div>
@@ -598,7 +539,7 @@ with left_strip_col:
                 if st.button("Hide", width="stretch"):
                     st.session_state["show_side_panel"] = False
 
-            st.markdown('<p class="section-title">Voice Engine</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">🎚️ Voice Engine</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-note">Select a generation mode for your output audio.</p>', unsafe_allow_html=True)
             st.radio(
                 "Voice engine",
@@ -610,7 +551,7 @@ with left_strip_col:
 
             st.markdown('<div class="side-divider"></div>', unsafe_allow_html=True)
 
-            st.markdown('<p class="section-title">Quick Options</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">⚙️ Quick Options</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-note">Small tweaks to shape your output.</p>', unsafe_allow_html=True)
             tone_mode = st.selectbox("Tone", ["Balanced", "Professional", "Warm"], index=0)
             delivery_mode = st.selectbox("Delivery", ["Natural", "Narration", "Expressive"], index=0)
@@ -633,7 +574,7 @@ engine_mode = st.session_state.get("engine_mode", "Online (Neerja/Neural)")
 
 with main_col:
     with st.container(border=True):
-        st.markdown('<p class="section-title">Text Input</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-title">📝 Text Input</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-note">Paste script, notes, or paragraphs to convert into speech.</p>', unsafe_allow_html=True)
         _, clear_col, generate_col = st.columns([3, 1, 1])
         with clear_col:
@@ -656,7 +597,7 @@ with main_col:
 with right_strip_col:
     with st.container(border=True):
         if engine_mode == "Online (Neerja/Neural)":
-            st.markdown('<p class="section-title">Online Neural Controls</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">🌐 Online Neural Controls</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
             voice_options_by_language = {
                 "English": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
@@ -678,7 +619,7 @@ with right_strip_col:
             pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
             online_file_stem = st.text_input("File name", value="textvoice_neerja_output")
         else:
-            st.markdown('<p class="section-title">Offline Voice Controls</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">💻 Offline Voice Controls</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-note">Works offline using installed Windows voices.</p>', unsafe_allow_html=True)
             language = st.selectbox("Language", ["English", "Hindi"], index=0)
             speed_label = st.selectbox("Speed", ["Slow", "Normal", "Fast"], index=1)
