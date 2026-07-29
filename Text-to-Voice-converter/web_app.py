@@ -19,7 +19,7 @@ except ImportError:
 
 
 st.set_page_config(page_title="AwaazCraft", page_icon="🎙️", layout="wide")
-st.markdown(
+st.html(
     textwrap.dedent(
         """
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -477,8 +477,7 @@ st.markdown(
       <span class="stat-chip">One-click download</span>
     </div>
     """
-    ),
-    unsafe_allow_html=True,
+    )
 )
 
 def _tts_to_wav_bytes(text: str, rate: int, volume: float, voice_id: str | None = None) -> bytes:
