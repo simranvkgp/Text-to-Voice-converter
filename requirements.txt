@@ -1,5 +1,8 @@
 streamlit
 edge-tts
 gTTS
+numpy
+pydub
+audioop-lts; python_version >= "3.13"
 # Optional, for offline mode:
 pyttsx3

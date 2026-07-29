@@ -17,6 +17,16 @@ try:
 except ImportError:
     edge_tts = None
 
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+try:
+    from pydub import AudioSegment
+except ImportError:
+    AudioSegment = None
+
 
 st.set_page_config(page_title="AwaazCraft", page_icon="🎙️", layout="wide")
 st.html(
@@ -512,6 +522,131 @@ def _estimate_duration_seconds(text: str, words_per_minute: int = 150) -> int:
     return max(1, int((word_count / words_per_minute) * 60))
 
 
+BACKGROUND_SAMPLE_RATE = 24000
+
+
+def _lowpass_fft(signal: "np.ndarray", cutoff_hz: float, sample_rate: int) -> "np.ndarray":
+    """Zero out frequency content above cutoff_hz using an FFT brick-wall filter."""
+    n = len(signal)
+    freqs = np.fft.rfftfreq(n, d=1.0 / sample_rate)
+    spectrum = np.fft.rfft(signal)
+    spectrum[freqs > cutoff_hz] = 0
+    return np.fft.irfft(spectrum, n=n)
+
+
+def _normalize(signal: "np.ndarray", peak: float = 0.9) -> "np.ndarray":
+    max_abs = np.max(np.abs(signal))
+    if max_abs < 1e-9:
+        return signal
+    return signal / max_abs * peak
+
+
+def _add_bursts(
+    base: "np.ndarray",
+    sample_rate: int,
+    rng: "np.random.Generator",
+    events_per_second: float,
+    burst_len_ms: int,
+    amp_range: tuple[float, float],
+) -> "np.ndarray":
+    """Scatter short exponentially-decaying bursts over `base` (droplets, crackles, ...)."""
+    num_samples = len(base)
+    duration_s = num_samples / sample_rate
+    n_events = max(1, int(duration_s * events_per_second))
+    burst_len = max(4, int(sample_rate * burst_len_ms / 1000))
+    envelope = np.exp(-np.linspace(0, 9, burst_len))
+    out = base.copy()
+    positions = rng.integers(0, max(1, num_samples - burst_len), size=n_events)
+    for pos in positions:
+        amp = rng.uniform(*amp_range)
+        out[pos:pos + burst_len] += envelope * amp
+    return out
+
+
+def _gen_rain(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    hiss = _lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=5000, sample_rate=sample_rate)
+    hiss = _normalize(hiss, 0.35)
+    rain = _add_bursts(hiss, sample_rate, rng, events_per_second=14, burst_len_ms=18, amp_range=(0.15, 0.35))
+    return _normalize(rain, 0.6)
+
+
+def _gen_ocean_waves(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    brown = _normalize(_lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=350, sample_rate=sample_rate), 0.7)
+    t = np.arange(num_samples) / sample_rate
+    swell = 0.55 + 0.45 * np.sin(2 * np.pi * 0.09 * t - np.pi / 2)
+    return _normalize(brown * swell, 0.6)
+
+
+def _gen_campfire(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    hiss = _normalize(_lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=2500, sample_rate=sample_rate), 0.18)
+    fire = _add_bursts(hiss, sample_rate, rng, events_per_second=5, burst_len_ms=45, amp_range=(0.2, 0.55))
+    return _normalize(fire, 0.55)
+
+
+def _gen_night_crickets(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    bed = _normalize(_lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=400, sample_rate=sample_rate), 0.18)
+    t = np.arange(num_samples) / sample_rate
+    gate = (np.sin(2 * np.pi * 4.2 * t) > 0.6).astype(np.float64)
+    chirp = np.sin(2 * np.pi * 4200 * t) * gate * 0.4
+    return _normalize(bed + chirp, 0.5)
+
+
+def _gen_ambient_pad(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    t = np.arange(num_samples) / sample_rate
+    chord_freqs = [130.81, 164.81, 196.00, 246.94]  # C3, E3, G3, B3
+    pad = sum(np.sin(2 * np.pi * freq * t) for freq in chord_freqs) / len(chord_freqs)
+    tremolo = 0.75 + 0.25 * np.sin(2 * np.pi * 0.08 * t)
+    pad = pad * tremolo
+    fade_len = min(num_samples // 10, sample_rate * 2)
+    if fade_len > 0:
+        pad[:fade_len] *= np.linspace(0, 1, fade_len)
+        pad[-fade_len:] *= np.linspace(1, 0, fade_len)
+    return _normalize(pad, 0.35)
+
+
+BACKGROUND_SOUNDS = {
+    "None": None,
+    "Gentle Rain": _gen_rain,
+    "Ocean Waves": _gen_ocean_waves,
+    "Crackling Campfire": _gen_campfire,
+    "Night Crickets": _gen_night_crickets,
+    "Soft Ambient Pad": _gen_ambient_pad,
+}
+
+
+def _numpy_to_audio_segment(samples: "np.ndarray", sample_rate: int) -> "AudioSegment":
+    pcm16 = (np.clip(samples, -1.0, 1.0) * 32767).astype(np.int16)
+    return AudioSegment(pcm16.tobytes(), frame_rate=sample_rate, sample_width=2, channels=1)
+
+
+def _apply_background_ambience(main_bytes: bytes, main_format: str, background_name: str, mix_pct: int) -> bytes:
+    """Procedurally generate an ambience track and overlay it under the narration audio."""
+    if background_name == "None" or mix_pct <= 0:
+        return main_bytes
+
+    main_segment = AudioSegment.from_file(BytesIO(main_bytes), format=main_format)
+    duration_ms = len(main_segment) + 400
+    num_samples = int(BACKGROUND_SAMPLE_RATE * duration_ms / 1000)
+
+    rng = np.random.default_rng()
+    samples = BACKGROUND_SOUNDS[background_name](num_samples, BACKGROUND_SAMPLE_RATE, rng)
+
+    background_segment = _numpy_to_audio_segment(samples, BACKGROUND_SAMPLE_RATE)
+    background_segment = background_segment.set_frame_rate(main_segment.frame_rate)
+    background_segment = background_segment.set_channels(main_segment.channels)
+    background_segment = background_segment.set_sample_width(main_segment.sample_width)
+
+    # Map 0-100 to a dB range: quiet-but-present (-40dB) up to clearly-audible-but-under-narration (-6dB).
+    gain_db = -40 + (mix_pct / 100.0) * 34
+    background_segment = background_segment + gain_db
+
+    mixed = main_segment.overlay(background_segment[: len(main_segment)])
+
+    buffer = BytesIO()
+    mixed.export(buffer, format=main_format)
+    return buffer.getvalue()
+
+
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
 if "show_side_panel" not in st.session_state:
@@ -630,6 +765,18 @@ with right_strip_col:
             volume_pct = st.slider("Volume", min_value=0, max_value=100, value=100)
             offline_file_stem = st.text_input("File name", value="textvoice_output")
 
+        st.markdown('<div class="side-divider"></div>', unsafe_allow_html=True)
+        st.markdown('<p class="section-title">🎧 Background Ambience</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-note">Layer a subtle ambience under narration — great for stories and poems.</p>', unsafe_allow_html=True)
+        background_choice = st.selectbox("Ambience", list(BACKGROUND_SOUNDS.keys()), index=0)
+        background_mix_pct = st.slider(
+            "Ambience volume",
+            min_value=0,
+            max_value=100,
+            value=25,
+            disabled=(background_choice == "None"),
+        )
+
 if engine_mode == "Online (Neerja/Neural)":
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
@@ -649,6 +796,14 @@ if engine_mode == "Online (Neerja/Neural)":
                 except Exception as exc:
                     st.error(f"Could not generate online voice: {exc}")
                 else:
+                    if background_choice != "None":
+                        if np is None or AudioSegment is None:
+                            st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable background ambience.")
+                        else:
+                            try:
+                                mp3_bytes = _apply_background_ambience(mp3_bytes, "mp3", background_choice, background_mix_pct)
+                            except Exception as exc:
+                                st.warning(f"Could not add background ambience: {exc}")
                     output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
                     st.audio(BytesIO(mp3_bytes), format="audio/mp3")
                     st.download_button(
@@ -676,9 +831,17 @@ else:
                 except Exception as exc:
                     st.error(f"Could not generate speech: {exc}")
                 else:
-                    output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
                     if language == "Hindi" and not selected_voice_id:
                         st.info("Hindi offline voice not found in installed system voices. Using default voice.")
+                    if background_choice != "None":
+                        if np is None or AudioSegment is None:
+                            st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable background ambience.")
+                        else:
+                            try:
+                                wav_bytes = _apply_background_ambience(wav_bytes, "wav", background_choice, background_mix_pct)
+                            except Exception as exc:
+                                st.warning(f"Could not add background ambience: {exc}")
+                    output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
                     st.audio(BytesIO(wav_bytes), format="audio/wav")
                     st.download_button(
                         "Download WAV",
