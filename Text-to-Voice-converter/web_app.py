@@ -2,6 +2,7 @@ import os
 import tempfile
 import asyncio
 import re
+import textwrap
 from io import BytesIO
 
 import streamlit as st
@@ -19,30 +20,52 @@ except ImportError:
 
 st.set_page_config(page_title="AwaazCraft", page_icon="🎙️", layout="wide")
 st.markdown(
-    """
+    textwrap.dedent(
+        """
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
     <style>
+    /* ============================================================
+       DESIGN TOKENS — one primary accent (teal), one secondary
+       accent (amber, reserved for download/success), and a
+       graduated neutral scale for text/surfaces. Replaces the old
+       4-color teal/sage/olive/cream mix that competed visually.
+       ============================================================ */
     :root {
-        --teal: #428892;
-        --sage: #82a88e;
-        --olive: #b4c08f;
-        --cream: #d0d8b6;
-        --surface: rgba(248, 251, 242, 0.75);
-        --surface-strong: rgba(245, 249, 238, 0.92);
-        --text-main: #102426;
-        --text-soft: #1f3d3f;
-        --text-muted: #355557;
-        --line: rgba(73, 118, 109, 0.24);
-        --shadow-soft: 0 10px 30px rgba(62, 98, 97, 0.14);
+        --primary: #2f7d78;
+        --primary-light: #4fa39d;
+        --primary-dark: #235e5a;
+        --primary-soft: rgba(47, 125, 120, 0.10);
+
+        --accent: #c98a3e;
+        --accent-light: #dba55f;
+        --accent-soft: rgba(201, 138, 62, 0.12);
+
+        --surface: #fdfcf7;
+        --surface-card: rgba(255, 255, 255, 0.86);
+        --surface-card-strong: rgba(255, 255, 255, 0.97);
+
+        --ink-900: #16302e;
+        --ink-700: #2c4341;
+        --ink-500: #5b716f;
+        --ink-400: #7c908e;
+
+        --line: rgba(47, 125, 120, 0.18);
+        --line-strong: rgba(47, 125, 120, 0.30);
+
+        --shadow-soft: 0 10px 28px rgba(22, 48, 46, 0.10);
+        --shadow-lift: 0 14px 32px rgba(22, 48, 46, 0.16);
+        --radius-lg: 20px;
+        --radius-md: 16px;
+        --radius-sm: 12px;
     }
     .stApp {
         background:
-            radial-gradient(circle at 12% 8%, rgba(66, 136, 146, 0.22), transparent 34%),
-            radial-gradient(circle at 88% 12%, rgba(130, 168, 142, 0.2), transparent 32%),
-            linear-gradient(140deg, #edf3ea 0%, #e7efe3 45%, #dee8d6 100%);
-        color: var(--text-main);
+            radial-gradient(circle at 10% 6%, rgba(47, 125, 120, 0.10), transparent 36%),
+            radial-gradient(circle at 90% 10%, rgba(201, 138, 62, 0.08), transparent 34%),
+            linear-gradient(160deg, #f7f9f2 0%, var(--surface) 50%, #f3f6ee 100%);
+        color: var(--ink-900);
         font-family: 'Inter', sans-serif;
     }
     .block-container {
@@ -53,26 +76,35 @@ st.markdown(
         padding-right: 1.2rem;
     }
     p, span, label, li, .stMarkdown, div[data-testid="stMarkdownContainer"] p {
-        color: var(--text-main);
+        color: var(--ink-900);
     }
     div[data-testid="stCaptionContainer"], div[data-testid="stCaptionContainer"] p {
-        color: var(--text-muted) !important;
+        color: var(--ink-400) !important;
     }
     div[data-testid="stTextInput"] label,
     div[data-testid="stTextArea"] label,
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSlider"] label,
     div[data-testid="stRadio"] label {
-        color: var(--text-soft) !important;
+        color: var(--ink-700) !important;
         font-weight: 600 !important;
     }
     .hero {
-        background: linear-gradient(120deg, rgba(66, 136, 146, 0.92), rgba(130, 168, 142, 0.86), rgba(180, 192, 143, 0.8));
-        border: 1px solid rgba(66, 136, 146, 0.32);
-        box-shadow: var(--shadow-soft);
-        border-radius: 22px;
-        padding: 22px 24px;
-        margin: 60px 0px 10px 0px;
+        background: linear-gradient(120deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%);
+        border: 1px solid var(--line-strong);
+        box-shadow: var(--shadow-lift);
+        border-radius: var(--radius-lg);
+        padding: 24px 26px;
+        margin: 60px 0px 12px 0px;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 88% 15%, rgba(255,255,255,0.16), transparent 45%);
+        pointer-events: none;
     }
     .hero h1 {
         margin: 0;
@@ -81,17 +113,19 @@ st.markdown(
         font-size: 2.15rem;
         font-weight: 700;
         letter-spacing: -0.01em;
+        position: relative;
     }
     .hero p {
         margin: 7px 0 0 0;
-        color: #f7fbf1;
+        color: rgba(255, 255, 255, 0.88);
         font-size: 1rem;
         line-height: 1.45;
+        position: relative;
     }
     .glass-card {
-        background: var(--surface);
+        background: var(--surface-card);
         border: 1px solid var(--line);
-        border-radius: 18px;
+        border-radius: var(--radius-md);
         box-shadow: var(--shadow-soft);
         padding: 10px 16px 12px 16px;
         margin-bottom: 10px;
@@ -100,7 +134,7 @@ st.markdown(
     }
     .glass-card:hover {
         transform: translateY(-1px);
-        box-shadow: 0 14px 30px rgba(54, 89, 86, 0.18);
+        box-shadow: var(--shadow-lift);
     }
     .stat-chip {
         display: inline-block;
@@ -109,109 +143,147 @@ st.markdown(
         border-radius: 999px;
         padding: 6px 11px;
         font-size: 0.82rem;
-        border: 1px solid rgba(70, 114, 106, 0.34);
-        background: rgba(208, 216, 182, 0.85);
-        color: #183234;
+        border: 1px solid var(--line-strong);
+        background: var(--primary-soft);
+        color: var(--primary-dark);
+        font-weight: 600;
     }
     .section-title {
-        color: var(--text-main);
+        color: var(--ink-900);
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 1.12rem;
         font-weight: 700;
         margin: 0 0 2px 0;
     }
     .section-note {
-        color: var(--text-soft);
+        color: var(--ink-500);
         font-size: 0.92rem;
         margin: 0 0 8px 0;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: var(--surface-strong);
+        background: var(--surface-card-strong);
         border: 1px solid var(--line) !important;
-        border-radius: 18px !important;
-        box-shadow: 0 8px 24px rgba(67, 104, 96, 0.1);
+        border-radius: var(--radius-md) !important;
+        box-shadow: var(--shadow-soft);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     div[data-testid="stVerticalBlockBorderWrapper"]:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 28px rgba(63, 100, 91, 0.16);
+        box-shadow: var(--shadow-lift);
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         padding-top: 0.55rem;
         padding-bottom: 0.55rem;
     }
     div[data-testid="stTextArea"] textarea {
-        background: #f7faef !important;
-        color: #102426 !important;
-        caret-color: #000000 !important;
-        border: 1px solid rgba(84, 133, 125, 0.55) !important;
-        border-radius: 12px !important;
+        background: #ffffff !important;
+        color: var(--ink-900) !important;
+        caret-color: var(--primary-dark) !important;
+        border: 1px solid var(--line-strong) !important;
+        border-radius: var(--radius-sm) !important;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     div[data-testid="stTextArea"] textarea::placeholder {
-        color: #4f6d6f !important;
+        color: var(--ink-400) !important;
         opacity: 1 !important;
     }
     div[data-testid="stTextArea"] textarea:focus {
-        border: 1px solid #428892 !important;
-        box-shadow: 0 0 0 1px #428892 !important;
+        border: 1px solid var(--primary) !important;
+        box-shadow: 0 0 0 3px var(--primary-soft) !important;
     }
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stRadio"] > div,
     div[data-testid="stSlider"] > div {
-        color: var(--text-main) !important;
+        color: var(--ink-900) !important;
     }
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] span {
-        color: var(--text-main) !important;
+        color: var(--ink-900) !important;
     }
     div[data-baseweb="select"] input {
-        color: var(--text-main) !important;
+        color: var(--ink-900) !important;
     }
     input, textarea {
-        caret-color: #000000 !important;
+        caret-color: var(--primary-dark) !important;
     }
     div[data-baseweb="select"] > div {
-        background: #f7faef !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(84, 133, 125, 0.55) !important;
-        box-shadow: 0 6px 14px rgba(72, 110, 103, 0.08);
+        background: #ffffff !important;
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid var(--line-strong) !important;
+        box-shadow: 0 6px 14px rgba(22, 48, 46, 0.06);
     }
     div[data-baseweb="select"] > div:hover {
-        border: 1px solid rgba(66, 136, 146, 0.65) !important;
+        border: 1px solid var(--primary) !important;
     }
     div[data-baseweb="select"] svg {
-        fill: rgba(31, 61, 63, 0.8) !important;
+        fill: var(--ink-700) !important;
     }
     div[data-testid="stSelectbox"] [role="listbox"] {
-        background: #f6f9ee !important;
-        border: 1px solid rgba(84, 133, 125, 0.35) !important;
+        background: #ffffff !important;
+        border: 1px solid var(--line-strong) !important;
+    }
+    div[data-testid="stSlider"] [data-baseweb="slider"] [role="progressbar"] {
+        background: linear-gradient(90deg, var(--primary), var(--primary-light)) !important;
+    }
+    div[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+    div[data-testid="stRadio"] [data-baseweb="radio"] [data-checked="true"] div {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
     }
     div[data-testid="stButton"] button, div[data-testid="baseButton-secondary"] {
-        border-radius: 14px !important;
-        border: 1px solid rgba(58, 110, 108, 0.48) !important;
-        background: linear-gradient(135deg, var(--teal), var(--sage)) !important;
-        color: #f5f8ec !important;
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid var(--line-strong) !important;
+        background: #ffffff !important;
+        color: var(--primary-dark) !important;
         font-weight: 600 !important;
-        box-shadow: 0 8px 18px rgba(66, 136, 146, 0.2) !important;
+        box-shadow: var(--shadow-soft) !important;
         transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        white-space: nowrap !important;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
     }
     div[data-testid="stButton"] button:hover, div[data-testid="baseButton-secondary"]:hover {
         transform: translateY(-1px);
-        box-shadow: 0 12px 22px rgba(66, 136, 146, 0.26) !important;
-        filter: saturate(1.05);
+        background: var(--primary-soft) !important;
+        border-color: var(--primary) !important;
+        box-shadow: var(--shadow-lift) !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"],
+    div[data-testid="baseButton-primary"] {
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid var(--primary-dark) !important;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        box-shadow: 0 10px 22px rgba(47, 125, 120, 0.30) !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"]:hover {
+        background: linear-gradient(135deg, var(--primary-light), var(--primary)) !important;
+        box-shadow: 0 12px 26px rgba(47, 125, 120, 0.38) !important;
+        transform: translateY(-1px);
     }
     div[data-testid="stDownloadButton"] button {
-        border-radius: 14px !important;
-        border: 1px solid rgba(77, 115, 95, 0.50) !important;
-        background: linear-gradient(135deg, var(--sage), var(--olive)) !important;
-        color: #f5f8ec !important;
-        font-weight: 600 !important;
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid var(--accent) !important;
+        background: linear-gradient(135deg, var(--accent), #b3762e) !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        box-shadow: 0 10px 22px rgba(201, 138, 62, 0.30) !important;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     div[data-testid="stDownloadButton"] button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 10px 20px rgba(108, 132, 106, 0.24);
+        box-shadow: 0 12px 26px rgba(201, 138, 62, 0.38) !important;
+    }
+    div[data-testid="stAlert"] {
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid var(--line) !important;
+        border-left: 3px solid var(--primary) !important;
+        background: var(--primary-soft) !important;
+        color: var(--ink-900) !important;
     }
     /* Tooltips (fix dark tooltip text) */
     div[role="tooltip"],
@@ -221,9 +293,9 @@ st.markdown(
         color: #ffffff !important;
     }
     [data-baseweb="tooltip"] {
-        background: rgba(16, 36, 38, 0.92) !important;
-        border: 1px solid rgba(130, 168, 142, 0.35) !important;
-        box-shadow: 0 10px 22px rgba(20, 40, 40, 0.22) !important;
+        background: var(--ink-900) !important;
+        border: 1px solid var(--primary-light) !important;
+        box-shadow: var(--shadow-lift) !important;
     }
     .side-panel-header {
         display: flex;
@@ -237,12 +309,12 @@ st.markdown(
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-weight: 700;
         letter-spacing: -0.01em;
-        color: var(--text-main);
+        color: var(--ink-900);
         font-size: 1.02rem;
     }
     .side-panel-sub {
         margin: 2px 0 0 0;
-        color: var(--text-muted);
+        color: var(--ink-500);
         font-size: 0.86rem;
     }
     .side-chip {
@@ -251,24 +323,24 @@ st.markdown(
         gap: 8px;
         padding: 7px 10px;
         border-radius: 999px;
-        border: 1px solid rgba(78, 123, 113, 0.22);
-        background: rgba(247, 250, 239, 0.9);
-        color: var(--text-main);
+        border: 1px solid var(--line-strong);
+        background: var(--primary-soft);
+        color: var(--primary-dark);
         font-weight: 600;
         font-size: 0.84rem;
     }
     .side-divider {
         height: 1px;
-        background: rgba(73, 118, 109, 0.18);
+        background: var(--line);
         margin: 10px 0;
         border-radius: 99px;
     }
     .nav-strip {
-        background: linear-gradient(180deg, rgba(16, 36, 38, 0.88), rgba(31, 61, 63, 0.82));
-        border: 1px solid rgba(66, 136, 146, 0.26);
-        border-radius: 18px;
+        background: linear-gradient(180deg, var(--ink-900), var(--primary-dark));
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-md);
         padding: 10px 10px;
-        box-shadow: 0 14px 30px rgba(20, 40, 40, 0.18);
+        box-shadow: var(--shadow-lift);
         position: sticky;
         top: 12px;
     }
@@ -277,23 +349,23 @@ st.markdown(
         align-items: center;
         gap: 10px;
         padding: 10px 10px 12px 10px;
-        border-bottom: 1px solid rgba(208, 216, 182, 0.14);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
         margin-bottom: 10px;
     }
     .nav-logo {
         width: 34px;
         height: 34px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, rgba(66, 136, 146, 0.92), rgba(130, 168, 142, 0.86));
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, var(--primary-light), var(--accent));
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 800;
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .nav-name {
-        color: rgba(247, 251, 241, 0.98);
+        color: #ffffff;
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-weight: 700;
         font-size: 0.98rem;
@@ -301,16 +373,16 @@ st.markdown(
         line-height: 1.1;
     }
     .nav-sub {
-        color: rgba(247, 251, 241, 0.72);
+        color: rgba(255, 255, 255, 0.72);
         font-size: 0.78rem;
         margin: 2px 0 0 0;
     }
     .nav-item {
         padding: 10px 10px;
-        border-radius: 14px;
-        border: 1px solid rgba(208, 216, 182, 0.12);
-        background: rgba(245, 249, 238, 0.06);
-        color: rgba(247, 251, 241, 0.92);
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.92);
         font-weight: 650;
         font-size: 0.86rem;
         margin-bottom: 8px;
@@ -318,32 +390,32 @@ st.markdown(
     }
     .nav-item:hover {
         transform: translateY(-1px);
-        background: rgba(245, 249, 238, 0.1);
-        border-color: rgba(208, 216, 182, 0.22);
+        background: rgba(255, 255, 255, 0.10);
+        border-color: rgba(255, 255, 255, 0.22);
     }
     .nav-item-active {
-        background: linear-gradient(135deg, rgba(66, 136, 146, 0.45), rgba(130, 168, 142, 0.28));
-        border-color: rgba(130, 168, 142, 0.42);
+        background: linear-gradient(135deg, var(--primary-light), var(--accent));
+        border-color: var(--accent-light);
     }
     .nav-mini {
-        color: rgba(247, 251, 241, 0.62);
+        color: rgba(255, 255, 255, 0.62);
         font-size: 0.76rem;
         padding: 6px 10px 2px 10px;
     }
     .app-footer {
         margin-top: 1rem;
         text-align: center;
-        color: #000000 !important;
+        color: var(--ink-500) !important;
         font-size: 0.85rem;
         letter-spacing: 0.01em;
         background: transparent !important;
         border: none !important;
         padding: 10px 14px;
-        border-radius: 14px;
+        border-radius: var(--radius-sm);
         box-shadow: none !important;
     }
     .app-footer, .app-footer * {
-        color: #000000 !important;
+        color: var(--ink-500) !important;
     }
     @media (max-width: 900px) {
         .block-container {
@@ -404,7 +476,8 @@ st.markdown(
       <span class="stat-chip">Online + Offline modes</span>
       <span class="stat-chip">One-click download</span>
     </div>
-    """,
+    """
+    ),
     unsafe_allow_html=True,
 )
 
@@ -507,17 +580,19 @@ left_strip_col, main_col, right_strip_col = st.columns(layout_ratio, gap="medium
 with left_strip_col:
     if st.session_state["show_side_panel"]:
         with st.container(border=True):
-            h1, h2 = st.columns([3, 1])
+            h1, h2 = st.columns([2.2, 1])
             with h1:
                 st.markdown(
-                    """
+                    textwrap.dedent(
+                        """
                     <div class="side-panel-header">
                       <div>
                         <p class="side-panel-title">Controls</p>
                         <p class="side-panel-sub">Voice Engine + Quick Options</p>
                       </div>
                     </div>
-                    """,
+                    """
+                    ),
                     unsafe_allow_html=True,
                 )
             with h2:
@@ -544,9 +619,11 @@ with left_strip_col:
             output_focus = st.selectbox("Focus", ["Clarity", "Smoothness", "Energy"], index=0)
 
             st.markdown(
-                f"""
+                textwrap.dedent(
+                    f"""
                 <div class="side-chip">Selected: {tone_mode} • {delivery_mode} • {pacing_mode} • {output_focus}</div>
-                """,
+                """
+                ),
                 unsafe_allow_html=True,
             )
     else:
@@ -667,4 +744,4 @@ else:
                         width="stretch",
                     )
 
-st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur</p>', unsafe_allow_html=True)
+st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur · design-fix-v3</p>', unsafe_allow_html=True)
