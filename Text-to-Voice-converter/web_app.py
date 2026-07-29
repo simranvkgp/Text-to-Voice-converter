@@ -32,18 +32,18 @@ st.html(
        scale for text/surfaces.
        ============================================================ */
     :root {
-        --primary: #7c3aed;
-        --primary-light: #a78bfa;
-        --primary-dark: #5b21b6;
-        --primary-soft: rgba(124, 58, 237, 0.10);
+        --primary: #6d28d9;
+        --primary-light: #8b5cf6;
+        --primary-dark: #4c1d95;
+        --primary-soft: rgba(109, 40, 217, 0.08);
 
-        --secondary: #ec4899;
-        --secondary-light: #f472b6;
-        --secondary-dark: #be185d;
+        --secondary: #be185d;
+        --secondary-light: #db2777;
+        --secondary-dark: #9d174d;
 
-        --accent: #f59e0b;
-        --accent-light: #fbbf24;
-        --accent-soft: rgba(245, 158, 11, 0.12);
+        --accent: #b45309;
+        --accent-light: #d97706;
+        --accent-soft: rgba(180, 83, 9, 0.10);
 
         --surface: #faf9ff;
         --surface-card: rgba(255, 255, 255, 0.90);
@@ -65,9 +65,9 @@ st.html(
     }
     .stApp {
         background:
-            radial-gradient(circle at 8% 8%, rgba(124, 58, 237, 0.16), transparent 38%),
-            radial-gradient(circle at 92% 6%, rgba(236, 72, 153, 0.14), transparent 36%),
-            radial-gradient(circle at 50% 100%, rgba(6, 182, 212, 0.12), transparent 42%),
+            radial-gradient(circle at 8% 8%, rgba(109, 40, 217, 0.08), transparent 38%),
+            radial-gradient(circle at 92% 6%, rgba(190, 24, 93, 0.06), transparent 36%),
+            radial-gradient(circle at 50% 100%, rgba(6, 182, 212, 0.05), transparent 42%),
             linear-gradient(160deg, #fbfaff 0%, var(--surface) 50%, #f7f5ff 100%);
         color: var(--ink-900);
         font-family: 'Inter', sans-serif;
@@ -94,9 +94,9 @@ st.html(
         font-weight: 600 !important;
     }
     .hero {
-        background: linear-gradient(120deg, var(--primary-dark) 0%, var(--primary) 42%, var(--secondary) 75%, var(--accent) 100%);
+        background: linear-gradient(120deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
         border: 1px solid var(--line-strong);
-        box-shadow: 0 18px 40px rgba(124, 58, 237, 0.28);
+        box-shadow: 0 16px 34px rgba(76, 29, 149, 0.20);
         border-radius: var(--radius-lg);
         padding: 24px 26px;
         margin: 60px 0px 12px 0px;
@@ -108,8 +108,8 @@ st.html(
         position: absolute;
         inset: 0;
         background:
-            radial-gradient(circle at 14% 92%, rgba(255,255,255,0.20), transparent 40%),
-            radial-gradient(circle at 88% 15%, rgba(255,255,255,0.22), transparent 45%);
+            radial-gradient(circle at 14% 92%, rgba(255,255,255,0.14), transparent 40%),
+            radial-gradient(circle at 88% 15%, rgba(255,255,255,0.16), transparent 45%);
         pointer-events: none;
     }
     .hero h1 {
@@ -134,8 +134,8 @@ st.html(
         border: 1px solid var(--line);
         border-radius: var(--radius-md);
         box-shadow: var(--shadow-soft);
-        padding: 10px 16px 12px 16px;
-        margin-bottom: 10px;
+        padding: 12px 18px 14px 18px;
+        margin-bottom: 16px;
         backdrop-filter: blur(8px);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -151,10 +151,10 @@ st.html(
         padding: 6px 13px;
         font-size: 0.82rem;
         border: none;
-        background: linear-gradient(120deg, var(--primary), var(--secondary));
+        background: var(--primary);
         color: #ffffff;
         font-weight: 700;
-        box-shadow: 0 6px 16px rgba(124, 58, 237, 0.22);
+        box-shadow: 0 6px 14px rgba(76, 29, 149, 0.16);
     }
     .section-title {
         color: var(--primary-dark);
@@ -180,8 +180,8 @@ st.html(
         box-shadow: var(--shadow-lift);
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        padding-top: 0.55rem;
-        padding-bottom: 0.55rem;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
     }
     div[data-testid="stTextArea"] textarea {
         background: #ffffff !important;
@@ -215,23 +215,24 @@ st.html(
         caret-color: var(--primary-dark) !important;
     }
     div[data-baseweb="select"] > div {
-        background: #ffffff !important;
+        background: var(--surface-card-strong) !important;
         border-radius: var(--radius-sm) !important;
-        border: 1px solid var(--line-strong) !important;
+        border: 1.5px solid var(--line-strong) !important;
+        font-weight: 600 !important;
         box-shadow: 0 6px 14px rgba(76, 29, 149, 0.06);
     }
     div[data-baseweb="select"] > div:hover {
-        border: 1px solid var(--primary) !important;
+        border: 1.5px solid var(--primary) !important;
     }
     div[data-baseweb="select"] svg {
-        fill: var(--ink-700) !important;
+        fill: var(--primary) !important;
     }
     div[data-testid="stSelectbox"] [role="listbox"] {
         background: #ffffff !important;
-        border: 1px solid var(--line-strong) !important;
+        border: 1.5px solid var(--primary) !important;
     }
     div[data-testid="stSlider"] [data-baseweb="slider"] [role="progressbar"] {
-        background: linear-gradient(90deg, var(--primary), var(--primary-light)) !important;
+        background: var(--primary) !important;
     }
     div[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
         background-color: var(--primary) !important;
@@ -243,48 +244,50 @@ st.html(
     }
     div[data-testid="stButton"] button, div[data-testid="baseButton-secondary"] {
         border-radius: var(--radius-sm) !important;
-        border: 1px solid var(--line-strong) !important;
-        background: #ffffff !important;
+        border: 1.5px solid var(--primary) !important;
+        background: var(--primary-soft) !important;
         color: var(--primary-dark) !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         box-shadow: var(--shadow-soft) !important;
-        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
         white-space: nowrap !important;
         padding-left: 0.6rem !important;
         padding-right: 0.6rem !important;
     }
     div[data-testid="stButton"] button:hover, div[data-testid="baseButton-secondary"]:hover {
         transform: translateY(-1px);
-        background: var(--primary-soft) !important;
-        border-color: var(--primary) !important;
+        background: var(--primary) !important;
+        color: #ffffff !important;
+        border-color: var(--primary-dark) !important;
         box-shadow: var(--shadow-lift) !important;
     }
     div[data-testid="stButton"] button[kind="primary"],
     div[data-testid="baseButton-primary"] {
         border-radius: var(--radius-sm) !important;
         border: none !important;
-        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+        background: var(--primary) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        box-shadow: 0 12px 26px rgba(124, 58, 237, 0.34) !important;
+        box-shadow: 0 10px 22px rgba(76, 29, 149, 0.24) !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        background: linear-gradient(135deg, var(--secondary), var(--accent)) !important;
-        box-shadow: 0 14px 30px rgba(236, 72, 153, 0.36) !important;
+        background: var(--primary-dark) !important;
+        box-shadow: 0 12px 24px rgba(76, 29, 149, 0.30) !important;
         transform: translateY(-1px);
     }
     div[data-testid="stDownloadButton"] button {
         border-radius: var(--radius-sm) !important;
         border: none !important;
-        background: linear-gradient(135deg, var(--accent), var(--secondary)) !important;
+        background: var(--accent-light) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        box-shadow: 0 12px 26px rgba(245, 158, 11, 0.32) !important;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        box-shadow: 0 10px 22px rgba(180, 83, 9, 0.22) !important;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     }
     div[data-testid="stDownloadButton"] button:hover {
+        background: var(--accent) !important;
         transform: translateY(-1px);
-        box-shadow: 0 14px 30px rgba(236, 72, 153, 0.38) !important;
+        box-shadow: 0 12px 24px rgba(180, 83, 9, 0.30) !important;
     }
     div[data-testid="stAlert"] {
         border-radius: var(--radius-sm) !important;
@@ -331,8 +334,8 @@ st.html(
         gap: 8px;
         padding: 7px 12px;
         border-radius: 999px;
-        border: none;
-        background: linear-gradient(120deg, var(--primary-soft), var(--accent-soft));
+        border: 1px solid var(--line-strong);
+        background: var(--primary-soft);
         color: var(--primary-dark);
         font-weight: 700;
         font-size: 0.84rem;
