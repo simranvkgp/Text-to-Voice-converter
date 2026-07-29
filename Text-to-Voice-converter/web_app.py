@@ -750,6 +750,48 @@ def _generate_ambience_preview(background_name: str, duration_ms: int = 6000) ->
     return buffer.getvalue()
 
 
+# "Singing" here is a lightweight sing-song effect built on top of the regular TTS
+# voice (per-line pitch shifting + rhythmic pauses) — not a trained singing-voice
+# model. Real singing synthesis (DiffSinger/VISinger-style) needs GPU inference and
+# large model weights that won't run on this hosting tier.
+MELODY_STYLES = {
+    "Gentle Lullaby": {"semitones": [0, 2, 4, 2, 0, -2], "gap_ms": 260, "pace_delta": -20},
+    "Playful Bounce": {"semitones": [0, 4, 7, 4, 0, 4, 7, 9], "gap_ms": 140, "pace_delta": 10},
+    "Devotional Chant": {"semitones": [0, 0, 3, 0, -2, 0], "gap_ms": 320, "pace_delta": -30},
+}
+
+
+def _split_poem_lines(text: str) -> list[str]:
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
+def _pitch_shift_segment(segment: "AudioSegment", semitones: float) -> "AudioSegment":
+    """Naive resample-based pitch shift (changes pitch and duration together)."""
+    if abs(semitones) < 1e-6:
+        return segment
+    factor = 2 ** (semitones / 12.0)
+    shifted = segment._spawn(segment.raw_data, overrides={"frame_rate": int(segment.frame_rate * factor)})
+    return shifted.set_frame_rate(segment.frame_rate)
+
+
+def _synthesize_sung_poem(lines: list[str], melody_name: str, export_format: str, synth_line_fn) -> bytes:
+    """Render each line through `synth_line_fn`, pitch-shift it per the melody pattern, and stitch with pauses."""
+    style = MELODY_STYLES[melody_name]
+    semitone_pattern = style["semitones"]
+    gap = AudioSegment.silent(duration=style["gap_ms"])
+
+    combined = AudioSegment.silent(duration=0)
+    for i, line in enumerate(lines):
+        line_bytes = synth_line_fn(line)
+        segment = AudioSegment.from_file(BytesIO(line_bytes), format=export_format)
+        segment = _pitch_shift_segment(segment, semitone_pattern[i % len(semitone_pattern)])
+        combined += segment + gap
+
+    buffer = BytesIO()
+    combined.export(buffer, format=export_format)
+    return buffer.getvalue()
+
+
 if "tts_text" not in st.session_state:
     st.session_state["tts_text"] = ""
 if "show_side_panel" not in st.session_state:
@@ -896,24 +938,52 @@ with right_strip_col:
                 disabled=(background_choice == "None"),
             )
 
+        with st.popover("🎤 AI Singing (Beta)", width="stretch"):
+            st.markdown('<p class="section-title">🎤 AI Singing (Beta)</p>', unsafe_allow_html=True)
+            st.markdown(
+                '<p class="section-note">A lightweight sing-song effect: pitch-shifts each line to a melody '
+                'pattern and adds rhythmic pauses — not a trained singing voice.</p>',
+                unsafe_allow_html=True,
+            )
+            sing_mode = st.checkbox("Sing this as a poem", value=False)
+            melody_choice = st.selectbox(
+                "Melody style", list(MELODY_STYLES.keys()), index=0, disabled=not sing_mode,
+            )
+
 if engine_mode == "Online (Neerja/Neural)":
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
     elif generate_clicked:
         if not text.strip():
             st.warning("Please enter some text first.")
+        elif sing_mode and (np is None or AudioSegment is None):
+            st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable the singing effect.")
         else:
-            with st.spinner("Generating online neural voice..."):
+            with st.spinner("Singing your poem..." if sing_mode else "Generating online neural voice..."):
                 try:
-                    mp3_bytes = _edge_tts_to_mp3_bytes(
-                        text=text,
-                        voice=voice,
-                        rate_pct=speed_pct,
-                        volume_pct=vol_pct,
-                        pitch_hz=pitch_hz,
-                    )
+                    if sing_mode:
+                        lines = _split_poem_lines(text)
+                        if not lines:
+                            raise ValueError("No text lines found to sing.")
+                        pace = max(-50, min(80, speed_pct + MELODY_STYLES[melody_choice]["pace_delta"]))
+                        mp3_bytes = _synthesize_sung_poem(
+                            lines,
+                            melody_choice,
+                            "mp3",
+                            lambda line: _edge_tts_to_mp3_bytes(
+                                text=line, voice=voice, rate_pct=pace, volume_pct=vol_pct, pitch_hz=pitch_hz,
+                            ),
+                        )
+                    else:
+                        mp3_bytes = _edge_tts_to_mp3_bytes(
+                            text=text,
+                            voice=voice,
+                            rate_pct=speed_pct,
+                            volume_pct=vol_pct,
+                            pitch_hz=pitch_hz,
+                        )
                 except Exception as exc:
-                    st.error(f"Could not generate online voice: {exc}")
+                    st.error(f"Could not generate {'sung' if sing_mode else 'online'} voice: {exc}")
                 else:
                     if background_choice != "None":
                         if np is None or AudioSegment is None:
@@ -923,7 +993,8 @@ if engine_mode == "Online (Neerja/Neural)":
                                 mp3_bytes = _apply_background_ambience(mp3_bytes, "mp3", background_choice, background_mix_pct)
                             except Exception as exc:
                                 st.warning(f"Could not add background ambience: {exc}")
-                    output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}.mp3"
+                    stem_suffix = "_sung" if sing_mode else ""
+                    output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}{stem_suffix}.mp3"
                     st.audio(BytesIO(mp3_bytes), format="audio/mp3")
                     st.download_button(
                         "Download MP3",
@@ -942,13 +1013,28 @@ else:
     elif generate_clicked:
         if not text.strip():
             st.warning("Please enter some text first.")
+        elif sing_mode and (np is None or AudioSegment is None):
+            st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable the singing effect.")
         else:
-            with st.spinner("Generating offline voice..."):
+            with st.spinner("Singing your poem..." if sing_mode else "Generating offline voice..."):
                 try:
                     selected_voice_id = _pick_offline_voice(language)
-                    wav_bytes = _tts_to_wav_bytes(text, rate=rate, volume=volume, voice_id=selected_voice_id)
+                    if sing_mode:
+                        lines = _split_poem_lines(text)
+                        if not lines:
+                            raise ValueError("No text lines found to sing.")
+                        pace_delta = MELODY_STYLES[melody_choice]["pace_delta"]
+                        sung_rate = max(80, int(rate * (1 + pace_delta / 100.0)))
+                        wav_bytes = _synthesize_sung_poem(
+                            lines,
+                            melody_choice,
+                            "wav",
+                            lambda line: _tts_to_wav_bytes(line, rate=sung_rate, volume=volume, voice_id=selected_voice_id),
+                        )
+                    else:
+                        wav_bytes = _tts_to_wav_bytes(text, rate=rate, volume=volume, voice_id=selected_voice_id)
                 except Exception as exc:
-                    st.error(f"Could not generate speech: {exc}")
+                    st.error(f"Could not generate {'sung' if sing_mode else 'offline'} voice: {exc}")
                 else:
                     if language == "Hindi" and not selected_voice_id:
                         st.info("Hindi offline voice not found in installed system voices. Using default voice.")
@@ -960,7 +1046,8 @@ else:
                                 wav_bytes = _apply_background_ambience(wav_bytes, "wav", background_choice, background_mix_pct)
                             except Exception as exc:
                                 st.warning(f"Could not add background ambience: {exc}")
-                    output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}.wav"
+                    stem_suffix = "_sung" if sing_mode else ""
+                    output_name = f"{_safe_file_stem(offline_file_stem, 'textvoice_output')}{stem_suffix}.wav"
                     st.audio(BytesIO(wav_bytes), format="audio/wav")
                     st.download_button(
                         "Download WAV",
