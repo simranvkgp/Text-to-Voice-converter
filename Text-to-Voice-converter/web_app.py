@@ -1081,4 +1081,4 @@ else:
                         width="stretch",
                     )
 
-st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur · design-fix-v3</p>', unsafe_allow_html=True)
+st.markdown('<p class="app-footer">© 2026 Developed by Simran Kaur ·</p>', unsafe_allow_html=True)
