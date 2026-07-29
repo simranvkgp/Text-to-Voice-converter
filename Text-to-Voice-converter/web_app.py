@@ -869,31 +869,32 @@ with right_strip_col:
             offline_file_stem = st.text_input("File name", value="textvoice_output")
 
         st.markdown('<div class="side-divider"></div>', unsafe_allow_html=True)
-        st.markdown('<p class="section-title">🎧 Background Ambience</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-note">Layer a subtle ambience under narration — great for stories and poems.</p>', unsafe_allow_html=True)
-        background_choice = st.selectbox("Ambience", list(BACKGROUND_SOUNDS.keys()), index=0)
-        if background_choice != "None":
-            if st.button("🔊 Preview sound", width="stretch"):
-                if np is None or AudioSegment is None:
-                    st.warning("Install `numpy` and `pydub` to preview ambience sounds.")
-                else:
-                    try:
-                        st.session_state["ambience_preview_bytes"] = _generate_ambience_preview(background_choice)
-                        st.session_state["ambience_preview_name"] = background_choice
-                    except Exception as exc:
-                        st.warning(f"Could not generate preview: {exc}")
-            if (
-                st.session_state.get("ambience_preview_name") == background_choice
-                and st.session_state.get("ambience_preview_bytes")
-            ):
-                st.audio(BytesIO(st.session_state["ambience_preview_bytes"]), format="audio/wav")
-        background_mix_pct = st.slider(
-            "Ambience volume",
-            min_value=0,
-            max_value=100,
-            value=25,
-            disabled=(background_choice == "None"),
-        )
+        with st.popover("🎧 Background Ambience", width="stretch"):
+            st.markdown('<p class="section-title">🎧 Background Ambience</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-note">Layer a subtle ambience under narration — great for stories and poems.</p>', unsafe_allow_html=True)
+            background_choice = st.selectbox("Ambience", list(BACKGROUND_SOUNDS.keys()), index=0)
+            if background_choice != "None":
+                if st.button("🔊 Preview sound", width="stretch"):
+                    if np is None or AudioSegment is None:
+                        st.warning("Install `numpy` and `pydub` to preview ambience sounds.")
+                    else:
+                        try:
+                            st.session_state["ambience_preview_bytes"] = _generate_ambience_preview(background_choice)
+                            st.session_state["ambience_preview_name"] = background_choice
+                        except Exception as exc:
+                            st.warning(f"Could not generate preview: {exc}")
+                if (
+                    st.session_state.get("ambience_preview_name") == background_choice
+                    and st.session_state.get("ambience_preview_bytes")
+                ):
+                    st.audio(BytesIO(st.session_state["ambience_preview_bytes"]), format="audio/wav")
+            background_mix_pct = st.slider(
+                "Ambience volume",
+                min_value=0,
+                max_value=100,
+                value=25,
+                disabled=(background_choice == "None"),
+            )
 
 if engine_mode == "Online (Neerja/Neural)":
     if edge_tts is None:
