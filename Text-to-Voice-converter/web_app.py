@@ -36,6 +36,7 @@ st.html(
         --primary-light: #8b5cf6;
         --primary-dark: #4c1d95;
         --primary-soft: rgba(109, 40, 217, 0.08);
+        --primary-tint: #ede9fe;
 
         --secondary: #be185d;
         --secondary-light: #db2777;
@@ -215,14 +216,14 @@ st.html(
         caret-color: var(--primary-dark) !important;
     }
     div[data-baseweb="select"] > div {
-        background: var(--surface-card-strong) !important;
+        background: var(--primary-tint) !important;
         border-radius: var(--radius-sm) !important;
-        border: 1.5px solid var(--line-strong) !important;
-        font-weight: 600 !important;
+        border: 2px solid var(--primary) !important;
+        font-weight: 700 !important;
         box-shadow: 0 6px 14px rgba(76, 29, 149, 0.06);
     }
     div[data-baseweb="select"] > div:hover {
-        border: 1.5px solid var(--primary) !important;
+        border: 2px solid var(--primary-dark) !important;
     }
     div[data-baseweb="select"] svg {
         fill: var(--primary) !important;
@@ -244,8 +245,8 @@ st.html(
     }
     div[data-testid="stButton"] button, div[data-testid="baseButton-secondary"] {
         border-radius: var(--radius-sm) !important;
-        border: 1.5px solid var(--primary) !important;
-        background: var(--primary-soft) !important;
+        border: 2px solid var(--primary) !important;
+        background: var(--primary-tint) !important;
         color: var(--primary-dark) !important;
         font-weight: 700 !important;
         box-shadow: var(--shadow-soft) !important;
