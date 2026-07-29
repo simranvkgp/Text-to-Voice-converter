@@ -563,6 +563,60 @@ def _add_bursts(
     return out
 
 
+def _add_bird_chirps(
+    base: "np.ndarray",
+    sample_rate: int,
+    rng: "np.random.Generator",
+    events_per_second: float,
+    chirp_len_ms: int,
+    freq_range: tuple[float, float],
+    amp_range: tuple[float, float],
+) -> "np.ndarray":
+    """Scatter short upward-sweeping tone bursts over `base` (bird chirps)."""
+    num_samples = len(base)
+    duration_s = num_samples / sample_rate
+    n_events = max(1, int(duration_s * events_per_second))
+    chirp_len = max(8, int(sample_rate * chirp_len_ms / 1000))
+    envelope = np.sin(np.linspace(0, np.pi, chirp_len))
+    out = base.copy()
+    positions = rng.integers(0, max(1, num_samples - chirp_len), size=n_events)
+    for pos in positions:
+        f0 = rng.uniform(*freq_range)
+        f1 = f0 * rng.uniform(1.15, 1.5)
+        freq_sweep = np.linspace(f0, f1, chirp_len)
+        phase = 2 * np.pi * np.cumsum(freq_sweep) / sample_rate
+        amp = rng.uniform(*amp_range)
+        out[pos:pos + chirp_len] += np.sin(phase) * envelope * amp
+    return out
+
+
+def _add_bell_strikes(
+    base: "np.ndarray",
+    sample_rate: int,
+    rng: "np.random.Generator",
+    events_per_second: float,
+    base_freq: float,
+    amp_range: tuple[float, float],
+    decay_s: float = 2.0,
+) -> "np.ndarray":
+    """Scatter struck-bell tones (fundamental + inharmonic overtones, long decay) over `base`."""
+    num_samples = len(base)
+    duration_s = num_samples / sample_rate
+    n_events = max(1, int(duration_s * events_per_second))
+    strike_len = min(num_samples, max(8, int(sample_rate * decay_s)))
+    t = np.arange(strike_len) / sample_rate
+    envelope = np.exp(-t / (decay_s / 4))
+    overtones = [1.0, 2.0, 2.76, 3.5]
+    strike_wave = sum(np.sin(2 * np.pi * base_freq * ot * t) * (0.8 ** i) for i, ot in enumerate(overtones))
+    strike_wave = _normalize(strike_wave, 1.0) * envelope
+    out = base.copy()
+    positions = rng.integers(0, max(1, num_samples - strike_len), size=n_events)
+    for pos in positions:
+        amp = rng.uniform(*amp_range)
+        out[pos:pos + strike_len] += strike_wave * amp
+    return out
+
+
 def _gen_rain(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
     hiss = _lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=5000, sample_rate=sample_rate)
     hiss = _normalize(hiss, 0.35)
@@ -604,6 +658,41 @@ def _gen_ambient_pad(num_samples: int, sample_rate: int, rng: "np.random.Generat
     return _normalize(pad, 0.35)
 
 
+def _gen_village_morning(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    breeze = _normalize(_lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=700, sample_rate=sample_rate), 0.12)
+    with_birds = _add_bird_chirps(
+        breeze, sample_rate, rng, events_per_second=0.9, chirp_len_ms=180,
+        freq_range=(1800, 3200), amp_range=(0.2, 0.4),
+    )
+    with_bell = _add_bell_strikes(
+        with_birds, sample_rate, rng, events_per_second=0.08, base_freq=440,
+        amp_range=(0.15, 0.3), decay_s=2.2,
+    )
+    return _normalize(with_bell, 0.55)
+
+
+def _gen_temple_bells(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    hall = _normalize(_lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=300, sample_rate=sample_rate), 0.05)
+    bells = _add_bell_strikes(
+        hall, sample_rate, rng, events_per_second=0.35, base_freq=523.25,
+        amp_range=(0.35, 0.6), decay_s=1.8,
+    )
+    return _normalize(bells, 0.6)
+
+
+def _gen_folk_flute(num_samples: int, sample_rate: int, rng: "np.random.Generator") -> "np.ndarray":
+    notes_hz = [392.00, 440.00, 523.25, 587.33, 659.25]  # G4 A4 C5 D5 E5, folk-flute register
+    note_len = int(sample_rate * 0.45)
+    t_note = np.arange(note_len) / sample_rate
+    note_envelope = np.sin(np.linspace(0, np.pi, note_len)) ** 0.6
+    phrase_indices = [0, 1, 2, 1, 3, 2, 4, 2]
+    phrase = np.concatenate([np.sin(2 * np.pi * notes_hz[i] * t_note) * note_envelope for i in phrase_indices])
+    reps = int(np.ceil(num_samples / len(phrase))) + 1
+    tune = np.tile(phrase, reps)[:num_samples]
+    breath = _normalize(_lowpass_fft(rng.normal(0, 1, num_samples), cutoff_hz=2000, sample_rate=sample_rate), 0.04)
+    return _normalize(tune * 0.5 + breath, 0.4)
+
+
 BACKGROUND_SOUNDS = {
     "None": None,
     "Gentle Rain": _gen_rain,
@@ -611,6 +700,9 @@ BACKGROUND_SOUNDS = {
     "Crackling Campfire": _gen_campfire,
     "Night Crickets": _gen_night_crickets,
     "Soft Ambient Pad": _gen_ambient_pad,
+    "Village Morning": _gen_village_morning,
+    "Temple Bells": _gen_temple_bells,
+    "Folk Flute Tune": _gen_folk_flute,
 }
 
 
