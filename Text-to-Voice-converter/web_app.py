@@ -152,7 +152,7 @@ st.html(
         padding: 6px 13px;
         font-size: 0.82rem;
         border: none;
-        background: var(--primary);
+        background: #9c76d8;
         color: #ffffff;
         font-weight: 700;
         box-shadow: 0 6px 14px rgba(76, 29, 149, 0.16);
@@ -266,13 +266,13 @@ st.html(
     div[data-testid="baseButton-primary"] {
         border-radius: var(--radius-sm) !important;
         border: none !important;
-        background: var(--primary) !important;
+        background: #9c76d8 !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         box-shadow: 0 10px 22px rgba(76, 29, 149, 0.24) !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        background: var(--primary-dark) !important;
+        background: var(--primary) !important;
         box-shadow: 0 12px 24px rgba(76, 29, 149, 0.30) !important;
         transform: translateY(-1px);
     }
