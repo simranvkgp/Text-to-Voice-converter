@@ -525,8 +525,15 @@ def _get_gemini_client():
     return google_genai.Client(api_key=api_key)
 
 
+GEMINI_TTS_SAMPLE_RATE = 24000
+
+
 def _gemini_tts_to_wav_bytes(text: str, voice: str = GEMINI_TTS_VOICE) -> bytes:
-    """Fallback online neural TTS using the Gemini API, for when Edge TTS is unreachable."""
+    """Fallback online neural TTS using the Gemini API, for when Edge TTS is unreachable.
+
+    Gemini returns raw 16-bit PCM (no WAV header), so it's wrapped into a
+    proper WAV container here — otherwise browsers can't play it.
+    """
     client = _get_gemini_client()
     interaction = client.interactions.create(
         model=GEMINI_TTS_MODEL,
@@ -534,10 +541,21 @@ def _gemini_tts_to_wav_bytes(text: str, voice: str = GEMINI_TTS_VOICE) -> bytes:
             "type": "user_input",
             "content": [{"type": "text", "text": text}],
         }],
-        response_format={"type": "audio"},
+        response_format={
+            "type": "audio",
+            "mime_type": "audio/l16",
+            "sample_rate": GEMINI_TTS_SAMPLE_RATE,
+        },
         generation_config={"speech_config": [{"voice": voice}]},
     )
-    return base64.b64decode(interaction.output_audio.data)
+    pcm_bytes = base64.b64decode(interaction.output_audio.data)
+    buffer = BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(GEMINI_TTS_SAMPLE_RATE)
+        wav_file.writeframes(pcm_bytes)
+    return buffer.getvalue()
 
 
 PIPER_VOICE_CATALOG = {
