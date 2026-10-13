@@ -1,6 +1,7 @@
 streamlit
 edge-tts>=7.0.0
 gTTS
+piper-tts
 numpy
 pydub
 audioop-lts; python_version >= "3.13"

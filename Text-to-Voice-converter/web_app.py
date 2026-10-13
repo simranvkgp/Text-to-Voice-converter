@@ -3,6 +3,8 @@ import tempfile
 import asyncio
 import re
 import textwrap
+import urllib.request
+import wave
 from io import BytesIO
 
 import streamlit as st
@@ -16,6 +18,11 @@ try:
     import edge_tts
 except ImportError:
     edge_tts = None
+
+try:
+    from piper import PiperVoice
+except ImportError:
+    PiperVoice = None
 
 try:
     import numpy as np
@@ -496,6 +503,46 @@ def _gtts_to_mp3_bytes(text: str, lang: str) -> bytes:
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+PIPER_VOICE_CATALOG = {
+    "hi": {"repo_dir": "hi/hi_IN/pratham/medium", "file_stem": "hi_IN-pratham-medium"},
+    "en": {"repo_dir": "en/en_US/lessac/medium", "file_stem": "en_US-lessac-medium"},
+}
+PIPER_VOICES_DIR = os.path.join(tempfile.gettempdir(), "piper_voices")
+
+
+def _download_piper_voice_files(lang_code: str) -> str:
+    """Download a Piper voice's .onnx + .onnx.json (once) into a local cache dir."""
+    meta = PIPER_VOICE_CATALOG[lang_code]
+    os.makedirs(PIPER_VOICES_DIR, exist_ok=True)
+    onnx_path = os.path.join(PIPER_VOICES_DIR, f"{meta['file_stem']}.onnx")
+    json_path = f"{onnx_path}.json"
+    base_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{meta['repo_dir']}"
+    for path, filename in (
+        (onnx_path, f"{meta['file_stem']}.onnx"),
+        (json_path, f"{meta['file_stem']}.onnx.json"),
+    ):
+        if not os.path.exists(path):
+            urllib.request.urlretrieve(f"{base_url}/{filename}", path)
+    return onnx_path
+
+
+@st.cache_resource(show_spinner=False)
+def _get_piper_voice(lang_code: str):
+    if PiperVoice is None:
+        raise RuntimeError("piper-tts is not installed")
+    onnx_path = _download_piper_voice_files(lang_code)
+    return PiperVoice.load(onnx_path)
+
+
+def _piper_tts_to_wav_bytes(text: str, lang_code: str) -> bytes:
+    """Fallback offline neural TTS using Piper, for when Edge TTS is unreachable."""
+    voice = _get_piper_voice(lang_code if lang_code in PIPER_VOICE_CATALOG else "en")
+    buffer = BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        voice.synthesize_wav(text, wav_file)
+    return buffer.getvalue()
 
 
 def _pick_offline_voice(language: str) -> str | None:
@@ -999,6 +1046,7 @@ if engine_mode == "Online (Neerja/Neural)":
             st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable the singing effect.")
         else:
             with st.spinner("Singing your poem..." if sing_mode else "Generating online neural voice..."):
+                audio_format = "mp3"
                 try:
                     if sing_mode:
                         lines = _split_poem_lines(text)
@@ -1032,18 +1080,30 @@ if engine_mode == "Online (Neerja/Neural)":
                     if sing_mode:
                         st.error(f"Could not generate sung voice: {exc}")
                     else:
+                        fallback_lang = voice.split("-")[0]
                         try:
-                            fallback_lang = voice.split("-")[0]
-                            mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
-                        except Exception as gtts_exc:
-                            st.error(
-                                "Could not generate online voice. "
-                                f"Edge TTS error: {exc} | gTTS fallback error: {gtts_exc}"
-                            )
+                            if fallback_lang not in PIPER_VOICE_CATALOG:
+                                raise RuntimeError(f"No Piper voice available for language '{fallback_lang}'")
+                            mp3_bytes = _piper_tts_to_wav_bytes(text=text, lang_code=fallback_lang)
+                            audio_format = "wav"
+                        except Exception as piper_exc:
+                            try:
+                                mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
+                                audio_format = "mp3"
+                            except Exception as gtts_exc:
+                                st.error(
+                                    "Could not generate online voice. "
+                                    f"Edge TTS error: {exc} | Piper error: {piper_exc} | gTTS fallback error: {gtts_exc}"
+                                )
+                            else:
+                                st.warning(
+                                    "Edge TTS is currently unreachable (likely blocked from this server). "
+                                    "Used gTTS as a fallback voice instead."
+                                )
                         else:
-                            st.warning(
+                            st.info(
                                 "Edge TTS is currently unreachable (likely blocked from this server). "
-                                "Used gTTS as a fallback voice instead."
+                                "Used a local neural voice (Piper) as a fallback instead."
                             )
 
                 if mp3_bytes:
@@ -1052,17 +1112,17 @@ if engine_mode == "Online (Neerja/Neural)":
                             st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable background ambience.")
                         else:
                             try:
-                                mp3_bytes = _apply_background_ambience(mp3_bytes, "mp3", background_choice, background_mix_pct)
+                                mp3_bytes = _apply_background_ambience(mp3_bytes, audio_format, background_choice, background_mix_pct)
                             except Exception as exc:
                                 st.warning(f"Could not add background ambience: {exc}")
                     stem_suffix = "_sung" if sing_mode else ""
-                    output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}{stem_suffix}.mp3"
-                    st.audio(BytesIO(mp3_bytes), format="audio/mp3")
+                    output_name = f"{_safe_file_stem(online_file_stem, 'textvoice_neerja_output')}{stem_suffix}.{audio_format}"
+                    st.audio(BytesIO(mp3_bytes), format=f"audio/{audio_format}")
                     st.download_button(
-                        "Download MP3",
+                        f"Download {audio_format.upper()}",
                         data=mp3_bytes,
                         file_name=output_name,
-                        mime="audio/mpeg",
+                        mime="audio/mpeg" if audio_format == "mp3" else "audio/wav",
                         width="stretch",
                     )
 else:
