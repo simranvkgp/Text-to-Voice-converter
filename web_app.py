@@ -22,7 +22,7 @@ except ImportError:
     gTTS = None
 
 
-st.set_page_config(page_title="TextVoice Web", page_icon="🔊", layout="wide")
+st.set_page_config(page_title="VoiceCraft Studio", page_icon="🎙️", layout="wide")
 st.markdown(
     """
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,9 +31,10 @@ st.markdown(
     <style>
     .stApp {
         background:
-            radial-gradient(circle at 8% 0%, rgba(99,102,241,0.22), rgba(99,102,241,0) 35%),
-            radial-gradient(circle at 92% 8%, rgba(16,185,129,0.18), rgba(16,185,129,0) 30%),
-            linear-gradient(155deg, #0b1022 0%, #0f1838 50%, #0a1530 100%);
+            radial-gradient(circle at 8% 0%, rgba(129,140,248,0.35), rgba(129,140,248,0) 38%),
+            radial-gradient(circle at 92% 8%, rgba(34,211,238,0.24), rgba(34,211,238,0) 34%),
+            radial-gradient(circle at 50% 100%, rgba(52,211,153,0.20), rgba(52,211,153,0) 45%),
+            linear-gradient(155deg, #070b1a 0%, #111a3e 45%, #0a1b3a 100%);
         color: #e2e8f0;
         font-family: 'DM Sans', sans-serif;
     }
@@ -277,13 +278,13 @@ st.markdown(
           <span></span><span></span><span></span><span></span><span></span>
         </div>
         <div class="hero-text">
-          <p class="hero-eyebrow">Text-to-Speech Studio</p>
-          <h1>TextVoice <em>Converter</em></h1>
-          <p>Transform written text into natural-sounding speech — with Indian neural voices online, or system voices offline.</p>
+          <p class="hero-eyebrow">AI Voice-Over Studio</p>
+          <h1>VoiceCraft <em>Studio</em></h1>
+          <p>Transform written text into natural-sounding speech with richer multi-language neural voices online, or system voices offline.</p>
           <div class="hero-meta">
-            <span class="hero-chip">Hindi + English</span>
+            <span class="hero-chip">Multi-language Voices</span>
             <span class="hero-chip">Online + Offline</span>
-            <span class="hero-chip">MP3 / WAV Export</span>
+            <span class="hero-chip">Pitch + Speed Controls</span>
           </div>
         </div>
       </div>
@@ -293,7 +294,7 @@ st.markdown(
       <div class="feature-item"><strong>⚡ Fast</strong>Generation</div>
       <div class="feature-item"><strong>🌐 Online</strong>Neural Voices</div>
       <div class="feature-item"><strong>💻 Offline</strong>System Voices</div>
-      <div class="feature-item"><strong>⬇ Download</strong>One Click</div>
+      <div class="feature-item"><strong>🎛️ Voice-over</strong>Pro Controls</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -335,6 +336,37 @@ def _looks_like_hindi(text: str) -> bool:
     return False
 
 
+ONLINE_LANGUAGE_VOICE_OPTIONS = {
+    "English (India)": ["en-IN-NeerjaNeural", "en-IN-PrabhatNeural"],
+    "Hindi (India)": ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"],
+    "English (US)": ["en-US-AriaNeural", "en-US-GuyNeural"],
+    "English (UK)": ["en-GB-SoniaNeural", "en-GB-RyanNeural"],
+    "Tamil (India)": ["ta-IN-PallaviNeural", "ta-IN-ValluvarNeural"],
+    "Telugu (India)": ["te-IN-ShrutiNeural", "te-IN-MohanNeural"],
+    "Bengali (India)": ["bn-IN-TanishaaNeural", "bn-IN-BashkarNeural"],
+}
+
+GTTS_LANG_BY_LANGUAGE = {
+    "English (India)": "en",
+    "Hindi (India)": "hi",
+    "English (US)": "en",
+    "English (UK)": "en",
+    "Tamil (India)": "ta",
+    "Telugu (India)": "te",
+    "Bengali (India)": "bn",
+}
+
+LANGUAGE_SAMPLE_TEXT = {
+    "English (India)": "Hello! Welcome to VoiceCraft Studio. This is a sample voice-over line.",
+    "Hindi (India)": "नमस्ते! वॉइसक्राफ्ट स्टूडियो में आपका स्वागत है। यह एक नमूना वॉइस-ओवर लाइन है।",
+    "English (US)": "Hello there! This is a polished sample narration from VoiceCraft Studio.",
+    "English (UK)": "Hello! This is a clean sample narration for your voice-over preview.",
+    "Tamil (India)": "வணக்கம்! VoiceCraft Studio-க்கு வரவேற்கிறோம். இது ஒரு மாதிரி குரல் பதிவு வரி.",
+    "Telugu (India)": "నమస్కారం! VoiceCraft Studioకి స్వాగతం. ఇది ఒక నమూనా వాయిస్ ఓవర్ పంక్తి.",
+    "Bengali (India)": "নমস্কার! VoiceCraft Studio-তে স্বাগতম। এটি একটি নমুনা ভয়েসওভার লাইন।",
+}
+
+
 def _get_offline_voice_options():
     """Return offline pyttsx3 voices as a list of (display_name, voice_id)."""
     engine = pyttsx3.init()
@@ -358,20 +390,33 @@ async def _edge_tts_save(text: str, voice: str, rate: str, volume: str, out_path
     await communicate.save(out_path)
 
 
-def _edge_rate_volume_strings(rate_pct: int, volume_pct: int) -> tuple[str, str]:
+def _edge_rate_volume_pitch_strings(rate_pct: int, volume_pct: int, pitch_hz: int) -> tuple[str, str, str]:
     """edge-tts expects strings like '+10%' or '0%'. Avoid '+0%'."""
     rate = "0%" if rate_pct == 0 else f"{rate_pct:+d}%"
     volume = "0%" if volume_pct == 0 else f"{volume_pct:+d}%"
-    return rate, volume
+    pitch = "0Hz" if pitch_hz == 0 else f"{pitch_hz:+d}Hz"
+    return rate, volume, pitch
 
 
-def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int) -> bytes:
+async def _edge_tts_save_with_pitch(
+    text: str,
+    voice: str,
+    rate: str,
+    volume: str,
+    pitch: str,
+    out_path: str,
+):
+    communicate = edge_tts.Communicate(text=text, voice=voice, rate=rate, volume=volume, pitch=pitch)
+    await communicate.save(out_path)
+
+
+def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int, pitch_hz: int = 0) -> bytes:
     """Generate MP3 bytes using online Edge TTS neural voices."""
-    rate, volume = _edge_rate_volume_strings(rate_pct, volume_pct)
+    rate, volume, pitch = _edge_rate_volume_pitch_strings(rate_pct, volume_pct, pitch_hz)
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp:
         temp_path = temp.name
     try:
-        asyncio.run(_edge_tts_save(text, voice, rate, volume, temp_path))
+        asyncio.run(_edge_tts_save_with_pitch(text, voice, rate, volume, pitch, temp_path))
         with open(temp_path, "rb") as f:
             return f.read()
     finally:
@@ -430,6 +475,7 @@ def _edge_tts_to_mp3_bytes_chunked(
     voice: str,
     rate_pct: int,
     volume_pct: int,
+    pitch_hz: int = 0,
     max_chars: int = 450,
 ) -> bytes:
     """Generate MP3 bytes by chunking the input text and concatenating MP3 frames."""
@@ -444,8 +490,24 @@ def _edge_tts_to_mp3_bytes_chunked(
             voice=voice,
             rate_pct=rate_pct,
             volume_pct=volume_pct,
+            pitch_hz=pitch_hz,
         )
     return combined
+
+
+def _detect_language_from_text(text: str) -> str | None:
+    if not text:
+        return None
+    script_patterns = {
+        "Hindi (India)": r"[\u0900-\u097F]",
+        "Tamil (India)": r"[\u0B80-\u0BFF]",
+        "Telugu (India)": r"[\u0C00-\u0C7F]",
+        "Bengali (India)": r"[\u0980-\u09FF]",
+    }
+    for language, pattern in script_patterns.items():
+        if re.search(pattern, text):
+            return language
+    return None
 
 
 def _gtts_to_mp3_bytes(text: str, lang: str) -> bytes:
@@ -474,7 +536,7 @@ with top_left:
         st.markdown('<p class="section-note">Select a generation mode for your output audio.</p>', unsafe_allow_html=True)
         engine_mode = st.radio(
             "Voice engine",
-            ["Online (Neerja/Neural)", "Offline (System voice)"],
+            ["Online (Neural voices)", "Offline (System voice)"],
             index=0,
             label_visibility="collapsed",
         )
@@ -490,26 +552,43 @@ with top_right:
             label_visibility="collapsed",
         )
 
-if engine_mode == "Online (Neerja/Neural)":
+if engine_mode == "Online (Neural voices)":
     with st.container(border=True):
         st.markdown('<p class="section-title">Online Neural Controls</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-note">Best quality Indian neural voice. Internet required.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-note">Best quality neural voice-over output. Internet required.</p>', unsafe_allow_html=True)
         controls_col1, controls_col2 = st.columns(2)
         with controls_col1:
+            language = st.selectbox(
+                "Language",
+                list(ONLINE_LANGUAGE_VOICE_OPTIONS.keys()),
+                index=0,
+            )
             voice = st.selectbox(
                 "Online Voice",
-                [
-                    "en-IN-NeerjaNeural",
-                    "en-IN-PrabhatNeural",
-                    "hi-IN-SwaraNeural",
-                    "hi-IN-MadhurNeural",
-                ],
+                ONLINE_LANGUAGE_VOICE_OPTIONS[language],
                 index=0,
             )
             speed_pct = st.slider("Speed (%)", min_value=-50, max_value=80, value=0)
         with controls_col2:
-            auto_hindi = st.checkbox("Auto Hindi detection", value=True)
+            auto_language = st.checkbox("Auto language detection", value=True)
             vol_pct = st.slider("Volume boost (%)", min_value=-50, max_value=50, value=0)
+            pitch_hz = st.slider("Pitch (Hz)", min_value=-50, max_value=50, value=0)
+
+    with st.container(border=True):
+        utility_col1, utility_col2 = st.columns(2)
+        with utility_col1:
+            if st.button("Use sample text", width="stretch"):
+                st.session_state["tts_text"] = LANGUAGE_SAMPLE_TEXT.get(language, "")
+                st.rerun()
+        with utility_col2:
+            if st.button("Clear text", width="stretch"):
+                st.session_state["tts_text"] = ""
+                st.rerun()
+
+    if text.strip():
+        chars = len(text.strip())
+        approx_seconds = max(1, int(chars / 14))
+        st.caption(f"Characters: {chars} | Estimated duration: ~{approx_seconds}s")
 
     if edge_tts is None:
         st.error("`edge-tts` is not installed. Run: `py -m pip install edge-tts`")
@@ -519,15 +598,16 @@ if engine_mode == "Online (Neerja/Neural)":
         else:
             with st.spinner("Generating online neural voice..."):
                 try:
+                    selected_language = language
                     voice_used = voice
-                    if auto_hindi and _looks_like_hindi(text) and not str(voice).startswith("hi-IN-"):
-                        # If the user typed Hindi, switch to a Hindi neural voice automatically.
-                        voice_used = "hi-IN-SwaraNeural"
+                    if auto_language:
+                        detected_language = _detect_language_from_text(text)
+                        if detected_language and detected_language in ONLINE_LANGUAGE_VOICE_OPTIONS:
+                            selected_language = detected_language
+                            voice_used = ONLINE_LANGUAGE_VOICE_OPTIONS[selected_language][0]
 
                     voice_candidates = [voice_used]
-                    if _looks_like_hindi(text):
-                        # If one Hindi voice fails, fall back to the other.
-                        for v in ["hi-IN-SwaraNeural", "hi-IN-MadhurNeural"]:
+                    for v in ONLINE_LANGUAGE_VOICE_OPTIONS.get(selected_language, []):
                             if v not in voice_candidates:
                                 voice_candidates.append(v)
 
@@ -548,6 +628,7 @@ if engine_mode == "Online (Neerja/Neural)":
                                     voice=candidate_voice,
                                     rate_pct=speed_pct,
                                     volume_pct=vol_pct,
+                                    pitch_hz=pitch_hz,
                                     max_chars=max_chars,
                                 )
                             else:
@@ -556,6 +637,7 @@ if engine_mode == "Online (Neerja/Neural)":
                                     voice=candidate_voice,
                                     rate_pct=speed_pct,
                                     volume_pct=vol_pct,
+                                    pitch_hz=pitch_hz,
                                 )
                             if mp3_bytes:
                                 voice_used = candidate_voice
@@ -572,6 +654,7 @@ if engine_mode == "Online (Neerja/Neural)":
                                             voice=candidate_voice,
                                             rate_pct=0,
                                             volume_pct=0,
+                                            pitch_hz=0,
                                             max_chars=max_chars,
                                         )
                                     else:
@@ -580,6 +663,7 @@ if engine_mode == "Online (Neerja/Neural)":
                                             voice=candidate_voice,
                                             rate_pct=0,
                                             volume_pct=0,
+                                            pitch_hz=0,
                                         )
                                     if mp3_bytes:
                                         voice_used = candidate_voice
@@ -592,7 +676,7 @@ if engine_mode == "Online (Neerja/Neural)":
                 except Exception as exc:
                     # Cloud fallback: if edge-tts fails, try gTTS for Hindi/English.
                     try:
-                        fallback_lang = "hi" if _looks_like_hindi(text) else "en"
+                        fallback_lang = GTTS_LANG_BY_LANGUAGE.get(selected_language, "en")
                         mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
                     except Exception as gtts_exc:
                         st.error(
@@ -605,7 +689,7 @@ if engine_mode == "Online (Neerja/Neural)":
                         st.download_button(
                             "Download MP3",
                             data=mp3_bytes,
-                            file_name="textvoice_fallback_output.mp3",
+                            file_name="voicecraft_fallback_output.mp3",
                             mime="audio/mpeg",
                             width="stretch",
                         )
@@ -614,7 +698,7 @@ if engine_mode == "Online (Neerja/Neural)":
                     st.download_button(
                         "Download MP3",
                         data=mp3_bytes,
-                        file_name="textvoice_neerja_output.mp3",
+                        file_name="voicecraft_output.mp3",
                         mime="audio/mpeg",
                         width="stretch",
                     )
@@ -676,7 +760,7 @@ else:
                     st.download_button(
                         "Download WAV",
                         data=wav_bytes,
-                        file_name="textvoice_output.wav",
+                        file_name="voicecraft_output.wav",
                         mime="audio/wav",
                         width="stretch",
                     )
