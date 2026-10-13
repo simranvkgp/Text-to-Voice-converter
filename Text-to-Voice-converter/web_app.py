@@ -27,6 +27,11 @@ try:
 except ImportError:
     AudioSegment = None
 
+try:
+    from gtts import gTTS
+except ImportError:
+    gTTS = None
+
 
 st.set_page_config(page_title="AwaazCraft", page_icon="🎙️", layout="wide")
 st.html(
@@ -470,6 +475,22 @@ def _edge_tts_to_mp3_bytes(text: str, voice: str, rate_pct: int, volume_pct: int
         temp_path = temp.name
     try:
         asyncio.run(_edge_tts_save(text, voice, rate, volume, temp_path, pitch))
+        with open(temp_path, "rb") as f:
+            return f.read()
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
+def _gtts_to_mp3_bytes(text: str, lang: str) -> bytes:
+    """Fallback online TTS using gTTS, for when Edge TTS is unreachable."""
+    if gTTS is None:
+        raise RuntimeError("gTTS is not installed")
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp:
+        temp_path = temp.name
+    try:
+        tts = gTTS(text=text, lang=lang)
+        tts.save(temp_path)
         with open(temp_path, "rb") as f:
             return f.read()
     finally:
@@ -1007,8 +1028,25 @@ if engine_mode == "Online (Neerja/Neural)":
                             pitch_hz=pitch_hz,
                         )
                 except Exception as exc:
-                    st.error(f"Could not generate {'sung' if sing_mode else 'online'} voice: {exc}")
-                else:
+                    mp3_bytes = None
+                    if sing_mode:
+                        st.error(f"Could not generate sung voice: {exc}")
+                    else:
+                        try:
+                            fallback_lang = voice.split("-")[0]
+                            mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
+                        except Exception as gtts_exc:
+                            st.error(
+                                "Could not generate online voice. "
+                                f"Edge TTS error: {exc} | gTTS fallback error: {gtts_exc}"
+                            )
+                        else:
+                            st.warning(
+                                "Edge TTS is currently unreachable (likely blocked from this server). "
+                                "Used gTTS as a fallback voice instead."
+                            )
+
+                if mp3_bytes:
                     if background_choice != "None":
                         if np is None or AudioSegment is None:
                             st.warning("Install `numpy` and `pydub` (plus ffmpeg) to enable background ambience.")
