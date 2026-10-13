@@ -1,4 +1,5 @@
 import os
+import base64
 import tempfile
 import asyncio
 import re
@@ -18,6 +19,11 @@ try:
     import edge_tts
 except ImportError:
     edge_tts = None
+
+try:
+    from google import genai as google_genai
+except ImportError:
+    google_genai = None
 
 try:
     from piper import PiperVoice
@@ -503,6 +509,35 @@ def _gtts_to_mp3_bytes(text: str, lang: str) -> bytes:
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
+GEMINI_TTS_VOICE = "Kore"
+
+
+@st.cache_resource(show_spinner=False)
+def _get_gemini_client():
+    if google_genai is None:
+        raise RuntimeError("google-genai is not installed")
+    api_key = st.secrets.get("GEMINI_API_KEY") if hasattr(st, "secrets") else None
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not configured in Streamlit secrets")
+    return google_genai.Client(api_key=api_key)
+
+
+def _gemini_tts_to_wav_bytes(text: str, voice: str = GEMINI_TTS_VOICE) -> bytes:
+    """Fallback online neural TTS using the Gemini API, for when Edge TTS is unreachable."""
+    client = _get_gemini_client()
+    interaction = client.interactions.create(
+        model=GEMINI_TTS_MODEL,
+        input=[{
+            "type": "user_input",
+            "content": [{"type": "text", "text": text}],
+        }],
+        response_format={"type": "audio"},
+        generation_config={"speech_config": [{"voice": voice}]},
+    )
+    return base64.b64decode(interaction.output_audio.data)
 
 
 PIPER_VOICE_CATALOG = {
@@ -1082,28 +1117,38 @@ if engine_mode == "Online (Neerja/Neural)":
                     else:
                         fallback_lang = voice.split("-")[0]
                         try:
-                            if fallback_lang not in PIPER_VOICE_CATALOG:
-                                raise RuntimeError(f"No Piper voice available for language '{fallback_lang}'")
-                            mp3_bytes = _piper_tts_to_wav_bytes(text=text, lang_code=fallback_lang)
+                            mp3_bytes = _gemini_tts_to_wav_bytes(text=text)
                             audio_format = "wav"
-                        except Exception as piper_exc:
+                        except Exception as gemini_exc:
                             try:
-                                mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
-                                audio_format = "mp3"
-                            except Exception as gtts_exc:
-                                st.error(
-                                    "Could not generate online voice. "
-                                    f"Edge TTS error: {exc} | Piper error: {piper_exc} | gTTS fallback error: {gtts_exc}"
-                                )
+                                if fallback_lang not in PIPER_VOICE_CATALOG:
+                                    raise RuntimeError(f"No Piper voice available for language '{fallback_lang}'")
+                                mp3_bytes = _piper_tts_to_wav_bytes(text=text, lang_code=fallback_lang)
+                                audio_format = "wav"
+                            except Exception as piper_exc:
+                                try:
+                                    mp3_bytes = _gtts_to_mp3_bytes(text=text, lang=fallback_lang)
+                                    audio_format = "mp3"
+                                except Exception as gtts_exc:
+                                    st.error(
+                                        "Could not generate online voice. "
+                                        f"Edge TTS error: {exc} | Gemini error: {gemini_exc} | "
+                                        f"Piper error: {piper_exc} | gTTS fallback error: {gtts_exc}"
+                                    )
+                                else:
+                                    st.warning(
+                                        "Edge TTS is currently unreachable (likely blocked from this server). "
+                                        "Used gTTS as a fallback voice instead."
+                                    )
                             else:
-                                st.warning(
+                                st.info(
                                     "Edge TTS is currently unreachable (likely blocked from this server). "
-                                    "Used gTTS as a fallback voice instead."
+                                    "Used a local neural voice (Piper) as a fallback instead."
                                 )
                         else:
                             st.info(
                                 "Edge TTS is currently unreachable (likely blocked from this server). "
-                                "Used a local neural voice (Piper) as a fallback instead."
+                                "Used Gemini as a fallback neural voice instead."
                             )
 
                 if mp3_bytes:

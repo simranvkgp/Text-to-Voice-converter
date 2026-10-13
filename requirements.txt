@@ -1,6 +1,7 @@
 streamlit
 edge-tts>=7.0.0
 gTTS
+google-genai
 piper-tts
 numpy
 pydub
